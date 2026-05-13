@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { unlockChannel } from "@/lib/chat.functions";
+import { unlockChannel, setChannelPassword } from "@/lib/chat.functions";
 import { MessageList } from "@/components/message-list";
 import { MessageComposer } from "@/components/message-composer";
 import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Pencil, Trash2 } from "lucide-react";
@@ -161,6 +161,36 @@ function EditChannelDialog({ open, onOpenChange, channel, onSaved }: { open: boo
   const [name, setName] = useState(channel.name);
   const [topic, setTopic] = useState(channel.topic ?? "");
   const [pwd, setPwd] = useState("");
-  const setPassword = useServerFn((await import("@/lib/chat.functions")).setChannelPassword as any);
-  return null as any; // placeholder — see below proper version
+  const setPassword = useServerFn(setChannelPassword);
+  useEffect(() => { setName(channel.name); setTopic(channel.topic ?? ""); setPwd(""); }, [channel.id]);
+  const save = async () => {
+    const slug = name.toLowerCase().replace(/[^a-z0-9-]+/g, "-").slice(0, 32);
+    const { error } = await supabase.from("channels").update({ name: slug, topic }).eq("id", channel.id);
+    if (error) return toast.error(error.message);
+    if (channel.type === "locked" && pwd) {
+      try { await setPassword({ data: { channelId: channel.id, password: pwd } }); }
+      catch (e: any) { return toast.error(e?.message ?? "Failed to set password"); }
+    }
+    toast.success("Channel updated");
+    onOpenChange(false);
+    onSaved();
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Edit channel</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><label className="text-sm font-medium">Name</label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><label className="text-sm font-medium">Topic</label><Input value={topic} onChange={(e) => setTopic(e.target.value)} /></div>
+          {channel.type === "locked" && (
+            <div>
+              <label className="text-sm font-medium">{channel.password_hash ? "Change password" : "Set password"}</label>
+              <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Leave blank to keep" />
+            </div>
+          )}
+          <Button className="w-full" onClick={save}>Save</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
