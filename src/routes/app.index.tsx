@@ -10,7 +10,7 @@ import { MessageSquare, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_app/")({
+export const Route = createFileRoute("/app/")({
   component: DmHome,
 });
 

@@ -7,7 +7,7 @@ import { startDm } from "@/lib/chat.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/s/$spaceId/members")({
+export const Route = createFileRoute("/app/s/$spaceId/members")({
   component: MembersPage,
 });
 

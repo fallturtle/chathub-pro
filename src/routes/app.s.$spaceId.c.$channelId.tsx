@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_app/s/$spaceId/c/$channelId")({
+export const Route = createFileRoute("/app/s/$spaceId/c/$channelId")({
   component: ChannelRoute,
 });
 

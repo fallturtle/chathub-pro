@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { MessageList } from "@/components/message-list";
 import { MessageComposer } from "@/components/message-composer";
 
-export const Route = createFileRoute("/_app/dm/$threadId")({
+export const Route = createFileRoute("/app/dm/$threadId")({
   component: DmRoute,
 });
 
