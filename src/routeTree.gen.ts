@@ -11,7 +11,18 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppSSpaceIdRouteImport } from './routes/app.s.$spaceId'
+import { Route as AppDmThreadIdRouteImport } from './routes/app.dm.$threadId'
+import { Route as AppSSpaceIdIndexRouteImport } from './routes/app.s.$spaceId.index'
+import { Route as AppSSpaceIdSettingsRouteImport } from './routes/app.s.$spaceId.settings'
+import { Route as AppSSpaceIdMembersRouteImport } from './routes/app.s.$spaceId.members'
+import { Route as AppSSpaceIdEventsRouteImport } from './routes/app.s.$spaceId.events'
+import { Route as AppSSpaceIdBotRouteImport } from './routes/app.s.$spaceId.bot'
+import { Route as AppSSpaceIdCChannelIdRouteImport } from './routes/app.s.$spaceId.c.$channelId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -23,38 +34,166 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSSpaceIdRoute = AppSSpaceIdRouteImport.update({
+  id: '/s/$spaceId',
+  path: '/s/$spaceId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDmThreadIdRoute = AppDmThreadIdRouteImport.update({
+  id: '/dm/$threadId',
+  path: '/dm/$threadId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSSpaceIdIndexRoute = AppSSpaceIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
+const AppSSpaceIdSettingsRoute = AppSSpaceIdSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
+const AppSSpaceIdMembersRoute = AppSSpaceIdMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
+const AppSSpaceIdEventsRoute = AppSSpaceIdEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
+const AppSSpaceIdBotRoute = AppSSpaceIdBotRouteImport.update({
+  id: '/bot',
+  path: '/bot',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
+const AppSSpaceIdCChannelIdRoute = AppSSpaceIdCChannelIdRouteImport.update({
+  id: '/c/$channelId',
+  path: '/c/$channelId',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/': typeof AppIndexRoute
+  '/app/dm/$threadId': typeof AppDmThreadIdRoute
+  '/app/s/$spaceId': typeof AppSSpaceIdRouteWithChildren
+  '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
+  '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
+  '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId/': typeof AppSSpaceIdIndexRoute
+  '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app': typeof AppIndexRoute
+  '/app/dm/$threadId': typeof AppDmThreadIdRoute
+  '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
+  '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
+  '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId': typeof AppSSpaceIdIndexRoute
+  '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/': typeof AppIndexRoute
+  '/app/dm/$threadId': typeof AppDmThreadIdRoute
+  '/app/s/$spaceId': typeof AppSSpaceIdRouteWithChildren
+  '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
+  '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
+  '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId/': typeof AppSSpaceIdIndexRoute
+  '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/signup'
+    | '/app/settings'
+    | '/app/'
+    | '/app/dm/$threadId'
+    | '/app/s/$spaceId'
+    | '/app/s/$spaceId/bot'
+    | '/app/s/$spaceId/events'
+    | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId/'
+    | '/app/s/$spaceId/c/$channelId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup'
-  id: '__root__' | '/' | '/login' | '/signup'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/app/settings'
+    | '/app'
+    | '/app/dm/$threadId'
+    | '/app/s/$spaceId/bot'
+    | '/app/s/$spaceId/events'
+    | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId'
+    | '/app/s/$spaceId/c/$channelId'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/login'
+    | '/signup'
+    | '/app/settings'
+    | '/app/'
+    | '/app/dm/$threadId'
+    | '/app/s/$spaceId'
+    | '/app/s/$spaceId/bot'
+    | '/app/s/$spaceId/events'
+    | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId/'
+    | '/app/s/$spaceId/c/$channelId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
 }
@@ -75,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -82,11 +228,120 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/s/$spaceId': {
+      id: '/app/s/$spaceId'
+      path: '/s/$spaceId'
+      fullPath: '/app/s/$spaceId'
+      preLoaderRoute: typeof AppSSpaceIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dm/$threadId': {
+      id: '/app/dm/$threadId'
+      path: '/dm/$threadId'
+      fullPath: '/app/dm/$threadId'
+      preLoaderRoute: typeof AppDmThreadIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/s/$spaceId/': {
+      id: '/app/s/$spaceId/'
+      path: '/'
+      fullPath: '/app/s/$spaceId/'
+      preLoaderRoute: typeof AppSSpaceIdIndexRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
+    '/app/s/$spaceId/settings': {
+      id: '/app/s/$spaceId/settings'
+      path: '/settings'
+      fullPath: '/app/s/$spaceId/settings'
+      preLoaderRoute: typeof AppSSpaceIdSettingsRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
+    '/app/s/$spaceId/members': {
+      id: '/app/s/$spaceId/members'
+      path: '/members'
+      fullPath: '/app/s/$spaceId/members'
+      preLoaderRoute: typeof AppSSpaceIdMembersRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
+    '/app/s/$spaceId/events': {
+      id: '/app/s/$spaceId/events'
+      path: '/events'
+      fullPath: '/app/s/$spaceId/events'
+      preLoaderRoute: typeof AppSSpaceIdEventsRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
+    '/app/s/$spaceId/bot': {
+      id: '/app/s/$spaceId/bot'
+      path: '/bot'
+      fullPath: '/app/s/$spaceId/bot'
+      preLoaderRoute: typeof AppSSpaceIdBotRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
+    '/app/s/$spaceId/c/$channelId': {
+      id: '/app/s/$spaceId/c/$channelId'
+      path: '/c/$channelId'
+      fullPath: '/app/s/$spaceId/c/$channelId'
+      preLoaderRoute: typeof AppSSpaceIdCChannelIdRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
   }
 }
 
+interface AppSSpaceIdRouteChildren {
+  AppSSpaceIdBotRoute: typeof AppSSpaceIdBotRoute
+  AppSSpaceIdEventsRoute: typeof AppSSpaceIdEventsRoute
+  AppSSpaceIdMembersRoute: typeof AppSSpaceIdMembersRoute
+  AppSSpaceIdSettingsRoute: typeof AppSSpaceIdSettingsRoute
+  AppSSpaceIdIndexRoute: typeof AppSSpaceIdIndexRoute
+  AppSSpaceIdCChannelIdRoute: typeof AppSSpaceIdCChannelIdRoute
+}
+
+const AppSSpaceIdRouteChildren: AppSSpaceIdRouteChildren = {
+  AppSSpaceIdBotRoute: AppSSpaceIdBotRoute,
+  AppSSpaceIdEventsRoute: AppSSpaceIdEventsRoute,
+  AppSSpaceIdMembersRoute: AppSSpaceIdMembersRoute,
+  AppSSpaceIdSettingsRoute: AppSSpaceIdSettingsRoute,
+  AppSSpaceIdIndexRoute: AppSSpaceIdIndexRoute,
+  AppSSpaceIdCChannelIdRoute: AppSSpaceIdCChannelIdRoute,
+}
+
+const AppSSpaceIdRouteWithChildren = AppSSpaceIdRoute._addFileChildren(
+  AppSSpaceIdRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppDmThreadIdRoute: typeof AppDmThreadIdRoute
+  AppSSpaceIdRoute: typeof AppSSpaceIdRouteWithChildren
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppSettingsRoute: AppSettingsRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppDmThreadIdRoute: AppDmThreadIdRoute,
+  AppSSpaceIdRoute: AppSSpaceIdRouteWithChildren,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
 }
