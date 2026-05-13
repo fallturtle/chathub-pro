@@ -33,7 +33,7 @@ function MembersPage() {
   const isOwner = myRole === "owner";
 
   const setRole = async (uid: string, role: string) => {
-    const { error } = await supabase.from("space_members").update({ role }).match({ space_id: spaceId, user_id: uid });
+    const { error } = await supabase.from("space_members").update({ role: role as any }).match({ space_id: spaceId, user_id: uid });
     if (error) toast.error(error.message); else { toast.success("Updated"); load(); }
   };
   const ban = async (uid: string) => {
