@@ -15,10 +15,10 @@ type Msg = {
   id: string;
   body: string;
   author_id: string;
-  created_at: string;
+  created_at: string | null;
   edited_at: string | null;
   deleted_at: string | null;
-  pinned: boolean;
+  pinned: boolean | null;
   channel_id: string | null;
   dm_thread_id: string | null;
   author?: any;
@@ -75,7 +75,7 @@ export function MessageList({
     if (channelId) q = q.eq("channel_id", channelId);
     if (dmThreadId) q = q.eq("dm_thread_id", dmThreadId);
     q.then(async ({ data }) => {
-      setMessages(data ?? []);
+      setMessages((data ?? []) as Msg[]);
       const ids = Array.from(new Set((data ?? []).map((m) => m.author_id)));
       await loadProfiles(ids);
       await loadReactions((data ?? []).map((m) => m.id));
@@ -137,10 +137,11 @@ export function MessageList({
   let lastDay: string | null = null;
   for (const m of messages) {
     const last = grouped[grouped.length - 1];
-    if (last && last.author === m.author_id && new Date(m.created_at).getTime() - last.date.getTime() < 5 * 60 * 1000) {
+    const created = m.created_at ?? new Date().toISOString();
+    if (last && last.author === m.author_id && new Date(created).getTime() - last.date.getTime() < 5 * 60 * 1000) {
       last.msgs.push(m);
     } else {
-      grouped.push({ author: m.author_id, date: new Date(m.created_at), msgs: [m] });
+      grouped.push({ author: m.author_id, date: new Date(created), msgs: [m] });
     }
   }
 
