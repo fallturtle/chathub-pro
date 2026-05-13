@@ -76,7 +76,7 @@ export const joinSpaceByCode = createServerFn({ method: "POST" })
       if (inv) {
         if (inv.expires_at && new Date(inv.expires_at) < new Date())
           throw new Error("Invite expired");
-        if (inv.max_uses && inv.uses >= inv.max_uses) throw new Error("Invite exhausted");
+        if (inv.max_uses && (inv.uses ?? 0) >= inv.max_uses) throw new Error("Invite exhausted");
         spaceId = inv.space_id;
         await supabaseAdmin
           .from("invites")
