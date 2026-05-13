@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 
-export const Route = createFileRoute("/_app/s/$spaceId/settings")({
+export const Route = createFileRoute("/app/s/$spaceId/settings")({
   component: SpaceSettings,
 });
 
