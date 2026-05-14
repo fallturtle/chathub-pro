@@ -5,8 +5,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { unlockChannel, setChannelPassword } from "@/lib/chat.functions";
 import { MessageList } from "@/components/message-list";
-import { MessageComposer } from "@/components/message-composer";
-import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Pencil, Trash2 } from "lucide-react";
+import { MessageComposer, type ReplyTarget } from "@/components/message-composer";
+import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Pencil, Trash2, Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +31,8 @@ function ChannelRoute() {
   const [pwd, setPwd] = useState("");
   const [blocked, setBlocked] = useState<string[]>([]);
   const [editOpen, setEditOpen] = useState(false);
+  const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [replyTo, setReplyTo] = useState<ReplyTarget>(null);
 
   const reload = async () => {
     const { data } = await supabase.from("channels").select("*").eq("id", channelId).maybeSingle();
@@ -88,6 +90,7 @@ function ChannelRoute() {
             )}
           </>
         )}
+        <Button size="icon" variant="ghost" onClick={() => setPinnedOpen(true)} title="Pinned"><Pin className="h-4 w-4" /></Button>
       </header>
 
       {isLocked ? (
@@ -104,17 +107,26 @@ function ChannelRoute() {
         <RulesOrLinksView channel={channel} canManage={canManage} onSaved={reload} />
       ) : (
         <>
-          <MessageList channelId={channelId} blockedWords={blocked} canManage={canManage} />
+          <MessageList channelId={channelId} blockedWords={blocked} canManage={canManage} onReply={setReplyTo} />
           <MessageComposer
             channelId={channelId}
             disabled={!canPost}
             placeholder={isAnnouncement ? "Announcement…" : `Message #${channel.name}`}
-            blockedWords={blocked}
+            replyTo={replyTo}
+            onClearReply={() => setReplyTo(null)}
           />
         </>
       )}
 
       <EditChannelDialog open={editOpen} onOpenChange={setEditOpen} channel={channel} onSaved={reload} />
+      <Dialog open={pinnedOpen} onOpenChange={setPinnedOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader><DialogTitle><Pin className="inline h-4 w-4 mr-2" />Pinned messages</DialogTitle></DialogHeader>
+          <div className="flex-1 overflow-hidden flex flex-col min-h-[300px]">
+            <MessageList channelId={channelId} blockedWords={blocked} canManage={canManage} pinnedOnly />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
