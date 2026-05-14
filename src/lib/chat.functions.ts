@@ -136,3 +136,19 @@ export const checkUsernameAvailable = createServerFn({ method: "POST" })
       .maybeSingle();
     return { available: !exists };
   });
+
+export const resolveUsernameEmail = createServerFn({ method: "POST" })
+  .inputValidator((i) => z.object({ username: z.string().min(2).max(64) }).parse(i))
+  .handler(async ({ data }) => {
+    const u = data.username.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (u.length < 2) throw new Error("Invalid username");
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .ilike("username", u)
+      .maybeSingle();
+    if (!prof) throw new Error("No account with that username");
+    const { data: userRes, error } = await supabaseAdmin.auth.admin.getUserById(prof.id);
+    if (error || !userRes?.user?.email) throw new Error("Could not resolve account");
+    return { email: userRes.user.email };
+  });

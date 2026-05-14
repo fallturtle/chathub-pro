@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Sign up — Nexus" }] }),
+  head: () => ({ meta: [{ title: "Sign up — Atrium" }] }),
   component: SignupPage,
 });
 
@@ -41,7 +41,7 @@ function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4 rounded-xl border bg-card p-6">
         <div className="text-center">
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">N</div>
+          <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-gradient-to-br from-primary to-pink-500 text-white font-bold">A</div>
           <h1 className="mt-3 text-2xl font-bold">Create your account</h1>
           <p className="text-sm text-muted-foreground">Email is for recovery — you'll be known by your username.</p>
         </div>
