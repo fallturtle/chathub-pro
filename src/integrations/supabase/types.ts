@@ -151,13 +151,30 @@ export type Database = {
           },
         ]
       }
+      channel_passwords: {
+        Row: {
+          channel_id: string
+          password_hash: string
+          updated_at: string
+        }
+        Insert: {
+          channel_id: string
+          password_hash: string
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string
+          password_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       channels: {
         Row: {
           body: Json | null
           created_at: string | null
           id: string
           name: string
-          password_hash: string | null
           position: number
           space_id: string
           topic: string | null
@@ -168,7 +185,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
-          password_hash?: string | null
           position?: number
           space_id: string
           topic?: string | null
@@ -179,7 +195,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
-          password_hash?: string | null
           position?: number
           space_id?: string
           topic?: string | null
