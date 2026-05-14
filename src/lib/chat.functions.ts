@@ -2,9 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createHash } from "crypto";
-
-const sha = (s: string) => createHash("sha256").update(s).digest("hex");
+import bcrypt from "bcryptjs";
 
 export const setChannelPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -28,7 +26,7 @@ export const setChannelPassword = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("channel_passwords")
       .upsert(
-        { channel_id: data.channelId, password_hash: sha(data.password), updated_at: new Date().toISOString() },
+        { channel_id: data.channelId, password_hash: await bcrypt.hash(data.password, 12), updated_at: new Date().toISOString() },
         { onConflict: "channel_id" },
       );
     return { ok: true };
@@ -52,7 +50,7 @@ export const unlockChannel = createServerFn({ method: "POST" })
       .select("password_hash")
       .eq("channel_id", data.channelId)
       .maybeSingle();
-    if (!pw?.password_hash || pw.password_hash !== sha(data.password)) {
+    if (!pw?.password_hash || !(await bcrypt.compare(data.password, pw.password_hash))) {
       throw new Error("Wrong password");
     }
     await supabaseAdmin
