@@ -184,7 +184,7 @@ function EditChannelDialog({ open, onOpenChange, channel, onSaved }: { open: boo
           <div><label className="text-sm font-medium">Topic</label><Input value={topic} onChange={(e) => setTopic(e.target.value)} /></div>
           {channel.type === "locked" && (
             <div>
-              <label className="text-sm font-medium">{channel.password_hash ? "Change password" : "Set password"}</label>
+              <label className="text-sm font-medium">Set or change password</label>
               <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Leave blank to keep" />
             </div>
           )}
