@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, applyTheme } from "@/hooks/use-auth";
+import { useAuth, applyTheme, getStoredTheme, setStoredTheme } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ function UserSettings() {
   const { profile, user, refreshProfile } = useAuth();
   const [form, setForm] = useState<any>(null);
 
-  useEffect(() => { if (profile) setForm({ ...profile }); }, [profile]);
+  useEffect(() => { if (profile) setForm({ ...profile, theme_pref: getStoredTheme() }); }, [profile]);
   if (!form) return <div className="p-8">Loading…</div>;
 
   const save = async () => {
@@ -30,9 +30,9 @@ function UserSettings() {
       avatar_url: form.avatar_url || null,
       status_emoji: form.status_emoji,
       status_text: form.status_text,
-      theme_pref: form.theme_pref,
     }).eq("id", user!.id);
     if (error) return toast.error(error.message);
+    setStoredTheme(form.theme_pref);
     applyTheme(form.theme_pref);
     await refreshProfile();
     toast.success("Saved");
