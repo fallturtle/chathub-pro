@@ -22,6 +22,7 @@ function SpaceSettings() {
   const { user } = useAuth();
   const nav = useNavigate();
   const [space, setSpace] = useState<any>(null);
+  const [joinCode, setJoinCode] = useState<string>("");
   const [blocked, setBlocked] = useState<any[]>([]);
   const [newWord, setNewWord] = useState("");
   const [rate, setRate] = useState<any>(null);
@@ -29,6 +30,8 @@ function SpaceSettings() {
   const reload = async () => {
     const { data: s } = await supabase.from("spaces").select("*").eq("id", spaceId).maybeSingle();
     setSpace(s);
+    const { data: jc } = await supabase.from("space_join_codes").select("join_code").eq("space_id", spaceId).maybeSingle();
+    setJoinCode((jc as any)?.join_code ?? "");
     const { data: bw } = await supabase.from("filters_blocked").select("*").eq("space_id", spaceId);
     setBlocked(bw ?? []);
     const { data: r } = await supabase.from("filters_rate").select("*").eq("space_id", spaceId).maybeSingle();
@@ -134,8 +137,8 @@ function SpaceSettings() {
           <div>
             <Label>Quick join code</Label>
             <div className="flex gap-2">
-              <Input value={space.join_code} readOnly />
-              <Button onClick={() => navigator.clipboard.writeText(space.join_code).then(() => toast.success("Copied"))}>Copy</Button>
+              <Input value={joinCode} readOnly />
+              <Button onClick={() => navigator.clipboard.writeText(joinCode).then(() => toast.success("Copied"))} disabled={!joinCode}>Copy</Button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">Share with friends — they can join via the join dialog.</p>
           </div>
