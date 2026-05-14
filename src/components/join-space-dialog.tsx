@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { joinSpaceByCode } from "@/lib/chat.functions";
+import { joinSpaceByCode, joinPublicSpace } from "@/lib/chat.functions";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import { toast } from "sonner";
 export function JoinSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const nav = useNavigate();
   const join = useServerFn(joinSpaceByCode);
+  const joinPub = useServerFn(joinPublicSpace);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [publics, setPublics] = useState<any[]>([]);
@@ -45,6 +46,20 @@ export function JoinSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenC
     }
   };
 
+  const submitPublic = async (id: string) => {
+    setBusy(true);
+    try {
+      const { spaceId } = await joinPub({ data: { spaceId: id } });
+      toast.success("Joined!");
+      onOpenChange(false);
+      nav({ to: "/app/s/$spaceId", params: { spaceId } });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -57,13 +72,13 @@ export function JoinSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenC
           <TabsContent value="browse" className="space-y-2 max-h-96 overflow-y-auto">
             {publics.length === 0 && <p className="text-sm text-muted-foreground">No public spaces yet.</p>}
             {publics.map((s) => (
-              <button key={s.id} onClick={() => submit(s.id /* will fail; use join code */)} className="w-full text-left flex items-center gap-3 p-3 rounded-lg border hover:bg-accent">
+              <button key={s.id} onClick={() => submitPublic(s.id)} className="w-full text-left flex items-center gap-3 p-3 rounded-lg border hover:bg-accent">
                 <div className="h-10 w-10 rounded-lg flex items-center justify-center text-white" style={{ background: s.icon_bg ?? "#7c3aed" }}>{s.icon_emoji ?? "💬"}</div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">{s.name}</div>
                   <div className="text-xs text-muted-foreground truncate">{s.description}</div>
                 </div>
-                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); supabase.from("spaces").select("join_code").eq("id", s.id).single().then(({data}) => data && submit(data.join_code)); }}>Join</Button>
+                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); submitPublic(s.id); }}>Join</Button>
               </button>
             ))}
           </TabsContent>

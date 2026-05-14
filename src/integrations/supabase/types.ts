@@ -692,6 +692,29 @@ export type Database = {
           },
         ]
       }
+      space_join_codes: {
+        Row: {
+          join_code: string
+          space_id: string
+        }
+        Insert: {
+          join_code: string
+          space_id: string
+        }
+        Update: {
+          join_code?: string
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_join_codes_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: true
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       space_members: {
         Row: {
           banned: boolean
@@ -735,7 +758,6 @@ export type Database = {
           icon_emoji: string | null
           icon_url: string | null
           id: string
-          join_code: string
           mention_all_policy: Database["public"]["Enums"]["mention_all_policy"]
           name: string
           owner_id: string
@@ -749,7 +771,6 @@ export type Database = {
           icon_emoji?: string | null
           icon_url?: string | null
           id?: string
-          join_code?: string
           mention_all_policy?: Database["public"]["Enums"]["mention_all_policy"]
           name: string
           owner_id: string
@@ -763,7 +784,6 @@ export type Database = {
           icon_emoji?: string | null
           icon_url?: string | null
           id?: string
-          join_code?: string
           mention_all_policy?: Database["public"]["Enums"]["mention_all_policy"]
           name?: string
           owner_id?: string

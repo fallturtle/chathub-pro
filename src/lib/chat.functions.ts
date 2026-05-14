@@ -62,11 +62,11 @@ export const joinSpaceByCode = createServerFn({ method: "POST" })
     const code = data.code.trim();
     let spaceId: string | null = null;
     const { data: byJoin } = await supabaseAdmin
-      .from("spaces")
-      .select("id")
+      .from("space_join_codes")
+      .select("space_id")
       .eq("join_code", code)
       .maybeSingle();
-    if (byJoin) spaceId = byJoin.id;
+    if (byJoin) spaceId = byJoin.space_id;
     if (!spaceId) {
       const { data: inv } = await supabaseAdmin
         .from("invites")
@@ -89,6 +89,27 @@ export const joinSpaceByCode = createServerFn({ method: "POST" })
       .from("space_members")
       .upsert({ space_id: spaceId, user_id: userId, role: "member" }, { onConflict: "space_id,user_id" });
     return { spaceId };
+  });
+
+export const joinPublicSpace = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ spaceId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: sp } = await supabaseAdmin
+      .from("spaces")
+      .select("id, visibility")
+      .eq("id", data.spaceId)
+      .maybeSingle();
+    if (!sp) throw new Error("Space not found");
+    if (sp.visibility !== "public") throw new Error("Space is not public");
+    await supabaseAdmin
+      .from("space_members")
+      .upsert(
+        { space_id: sp.id, user_id: userId, role: "member" },
+        { onConflict: "space_id,user_id" },
+      );
+    return { spaceId: sp.id };
   });
 
 export const startDm = createServerFn({ method: "POST" })
@@ -137,18 +158,40 @@ export const checkUsernameAvailable = createServerFn({ method: "POST" })
     return { available: !exists };
   });
 
-export const resolveUsernameEmail = createServerFn({ method: "POST" })
-  .inputValidator((i) => z.object({ username: z.string().min(2).max(64) }).parse(i))
+export const loginWithIdentifier = createServerFn({ method: "POST" })
+  .inputValidator((i) =>
+    z
+      .object({
+        identifier: z.string().min(2).max(255),
+        password: z.string().min(1).max(200),
+      })
+      .parse(i),
+  )
   .handler(async ({ data }) => {
-    const u = data.username.toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (u.length < 2) throw new Error("Invalid username");
-    const { data: prof } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .ilike("username", u)
-      .maybeSingle();
-    if (!prof) throw new Error("No account with that username");
-    const { data: userRes, error } = await supabaseAdmin.auth.admin.getUserById(prof.id);
-    if (error || !userRes?.user?.email) throw new Error("Could not resolve account");
-    return { email: userRes.user.email };
+    let email = data.identifier.trim();
+    if (!email.includes("@")) {
+      const u = email.toLowerCase().replace(/[^a-z0-9_]/g, "");
+      if (u.length < 2) throw new Error("Invalid login");
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .ilike("username", u)
+        .maybeSingle();
+      if (!prof) throw new Error("Invalid login");
+      const { data: userRes, error: uerr } = await supabaseAdmin.auth.admin.getUserById(prof.id);
+      if (uerr || !userRes?.user?.email) throw new Error("Invalid login");
+      email = userRes.user.email;
+    }
+    const SUPABASE_URL = process.env.SUPABASE_URL!;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY!;
+    const { createClient } = await import("@supabase/supabase-js");
+    const tmp = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    });
+    const { data: signIn, error } = await tmp.auth.signInWithPassword({ email, password: data.password });
+    if (error || !signIn.session) throw new Error("Invalid login");
+    return {
+      access_token: signIn.session.access_token,
+      refresh_token: signIn.session.refresh_token,
+    };
   });

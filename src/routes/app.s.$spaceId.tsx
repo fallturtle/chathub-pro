@@ -38,6 +38,7 @@ function SpaceLayout() {
   const [channels, setChannels] = useState<any[]>([]);
   const [role, setRole] = useState<string>("member");
   const [createOpen, setCreateOpen] = useState(false);
+  const [joinCode, setJoinCode] = useState<string>("");
 
   const reloadChannels = async () => {
     const { data } = await supabase.from("channels").select("*").eq("space_id", spaceId).order("position");
@@ -49,6 +50,7 @@ function SpaceLayout() {
     supabase.from("spaces").select("*").eq("id", spaceId).maybeSingle().then(({ data }) => setSpace(data));
     reloadChannels();
     supabase.from("space_members").select("role").eq("space_id", spaceId).eq("user_id", user.id).maybeSingle().then(({ data }) => setRole((data as any)?.role ?? "member"));
+    supabase.from("space_join_codes").select("join_code").eq("space_id", spaceId).maybeSingle().then(({ data }) => setJoinCode((data as any)?.join_code ?? ""));
     const ch = supabase
       .channel(`sp-${spaceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "channels", filter: `space_id=eq.${spaceId}` }, reloadChannels)
@@ -84,7 +86,7 @@ function SpaceLayout() {
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/events", params: { spaceId } })}><Calendar className="h-4 w-4 mr-2" />Events</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/bot", params: { spaceId } })}><Bot className="h-4 w-4 mr-2" />Bot</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(space?.join_code ?? "").then(() => toast.success("Copied join code"))}>Copy join code</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(joinCode).then(() => toast.success("Copied join code"))} disabled={!joinCode}>Copy join code</DropdownMenuItem>
             {canManage && <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/settings", params: { spaceId } })}><Settings className="h-4 w-4 mr-2" />Settings</DropdownMenuItem>}
             <DropdownMenuSeparator />
             <DropdownMenuItem
