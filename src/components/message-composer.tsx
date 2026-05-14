@@ -4,8 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Send, Smile } from "lucide-react";
 import { toast } from "sonner";
-
-const QUICK_EMOJIS = ["😀","😂","😍","🤔","👍","❤️","🔥","🎉","🚀","✨","😢","😡"];
+import { EmojiPicker } from "./emoji-picker";
 
 export function MessageComposer({
   channelId,
@@ -61,10 +60,8 @@ export function MessageComposer({
             <Smile className="h-5 w-5" />
           </button>
           {showEmoji && (
-            <div className="absolute bottom-12 left-0 z-10 bg-popover border rounded-lg p-2 shadow-lg grid grid-cols-6 gap-1">
-              {QUICK_EMOJIS.map((e) => (
-                <button key={e} onClick={() => { setBody((b) => b + e); setShowEmoji(false); }} className="text-xl p-1 hover:bg-accent rounded">{e}</button>
-              ))}
+            <div className="absolute bottom-12 left-0 z-20">
+              <EmojiPicker onSelect={(e) => { setBody((b) => b + e); setShowEmoji(false); taRef.current?.focus(); }} />
             </div>
           )}
         </div>
