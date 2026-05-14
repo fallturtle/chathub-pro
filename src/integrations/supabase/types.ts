@@ -649,7 +649,6 @@ export type Database = {
           id: string
           status_emoji: string | null
           status_text: string | null
-          theme_pref: Database["public"]["Enums"]["theme_pref"] | null
           username: string
         }
         Insert: {
@@ -661,7 +660,6 @@ export type Database = {
           id: string
           status_emoji?: string | null
           status_text?: string | null
-          theme_pref?: Database["public"]["Enums"]["theme_pref"] | null
           username: string
         }
         Update: {
@@ -673,7 +671,6 @@ export type Database = {
           id?: string
           status_emoji?: string | null
           status_text?: string | null
-          theme_pref?: Database["public"]["Enums"]["theme_pref"] | null
           username?: string
         }
         Relationships: []
