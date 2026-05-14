@@ -11,7 +11,6 @@ type Profile = {
   status_emoji: string | null;
   status_text: string | null;
   description: string | null;
-  theme_pref: "light" | "dark" | "system";
 };
 
 type Ctx = {
@@ -41,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadProfile = async (uid: string) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
     setProfile((data as Profile) ?? null);
-    applyTheme((data as Profile)?.theme_pref ?? "system");
+    applyTheme(getStoredTheme());
   };
 
   useEffect(() => {
@@ -51,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) setTimeout(() => loadProfile(s.user.id), 0);
       else {
         setProfile(null);
-        applyTheme("system");
+        applyTheme(getStoredTheme());
       }
     });
     supabase.auth.getSession().then(({ data }) => {
@@ -96,4 +95,15 @@ export function applyTheme(pref: "light" | "dark" | "system") {
     (pref === "system" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) ||
     pref !== "light"; // default dark
   root.classList.toggle("dark", isDark);
+}
+
+export function getStoredTheme(): "light" | "dark" | "system" {
+  if (typeof window === "undefined") return "system";
+  const v = window.localStorage.getItem("theme_pref");
+  return v === "light" || v === "dark" || v === "system" ? v : "system";
+}
+
+export function setStoredTheme(pref: "light" | "dark" | "system") {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem("theme_pref", pref);
 }
