@@ -647,7 +647,6 @@ export type Database = {
           description: string | null
           display_name: string | null
           id: string
-          prefs: Json | null
           status_emoji: string | null
           status_text: string | null
           theme_pref: Database["public"]["Enums"]["theme_pref"] | null
@@ -660,7 +659,6 @@ export type Database = {
           description?: string | null
           display_name?: string | null
           id: string
-          prefs?: Json | null
           status_emoji?: string | null
           status_text?: string | null
           theme_pref?: Database["public"]["Enums"]["theme_pref"] | null
@@ -673,7 +671,6 @@ export type Database = {
           description?: string | null
           display_name?: string | null
           id?: string
-          prefs?: Json | null
           status_emoji?: string | null
           status_text?: string | null
           theme_pref?: Database["public"]["Enums"]["theme_pref"] | null
