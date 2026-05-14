@@ -45,6 +45,11 @@ export const unlockChannel = createServerFn({ method: "POST" })
       .eq("id", data.channelId)
       .maybeSingle();
     if (!ch || ch.type !== "locked") throw new Error("Not a locked channel");
+    const { data: isMember } = await supabaseAdmin.rpc("is_space_member", {
+      _space: ch.space_id,
+      _user: userId,
+    });
+    if (!isMember) throw new Error("Not a space member");
     const { data: pw } = await supabaseAdmin
       .from("channel_passwords")
       .select("password_hash")
@@ -151,6 +156,7 @@ export const startDm = createServerFn({ method: "POST" })
   });
 
 export const checkUsernameAvailable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ username: z.string().min(2).max(32) }).parse(i))
   .handler(async ({ data }) => {
     const u = data.username.toLowerCase().replace(/[^a-z0-9_]/g, "");
