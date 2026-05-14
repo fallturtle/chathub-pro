@@ -10,8 +10,8 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Nexus — Chat for communities" },
-      { name: "description", content: "Spaces, channels, DMs, and bots in one place." },
+      { title: "Atrium — Chat for communities" },
+      { name: "description", content: "Spaces, channels, DMs, polls, events, and bots — brought to you by The Artistry Hub." },
     ],
   }),
   component: Landing,
@@ -22,8 +22,8 @@ function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-2 font-bold text-lg">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">N</span>
-          Nexus
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-pink-500 text-white">A</span>
+          Atrium
         </div>
         <div className="flex gap-2">
           <Link to="/login"><Button variant="ghost">Log in</Button></Link>
@@ -34,9 +34,8 @@ function Landing() {
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
           Your community,<br />all in one space.
         </h1>
-        <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto">
-          Built like Discord, organized like Google Chat. Spaces, channels, threads, polls, events, DMs, and bots — without the bloat.
-        </p>
+        <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto">Built like Discord, organized like Google Chat. Spaces, channels, threads, polls, events, DMs, and bots — without the bloat.</p>
+        <p className="mt-3 text-sm font-medium tracking-wide text-primary">Brought to you by The Artistry Hub</p>
         <div className="mt-10 flex justify-center gap-3">
           <Link to="/signup"><Button size="lg">Get started — it's free</Button></Link>
           <Link to="/login"><Button size="lg" variant="outline">I have an account</Button></Link>
