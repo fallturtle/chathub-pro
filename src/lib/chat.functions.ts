@@ -26,9 +26,11 @@ export const setChannelPassword = createServerFn({ method: "POST" })
     });
     if (!ok) throw new Error("Not allowed");
     await supabaseAdmin
-      .from("channels")
-      .update({ password_hash: sha(data.password) })
-      .eq("id", data.channelId);
+      .from("channel_passwords")
+      .upsert(
+        { channel_id: data.channelId, password_hash: sha(data.password), updated_at: new Date().toISOString() },
+        { onConflict: "channel_id" },
+      );
     return { ok: true };
   });
 
@@ -41,11 +43,16 @@ export const unlockChannel = createServerFn({ method: "POST" })
     const { userId } = context;
     const { data: ch } = await supabaseAdmin
       .from("channels")
-      .select("id, password_hash, space_id, type")
+      .select("id, space_id, type")
       .eq("id", data.channelId)
       .maybeSingle();
     if (!ch || ch.type !== "locked") throw new Error("Not a locked channel");
-    if (!ch.password_hash || ch.password_hash !== sha(data.password)) {
+    const { data: pw } = await supabaseAdmin
+      .from("channel_passwords")
+      .select("password_hash")
+      .eq("channel_id", data.channelId)
+      .maybeSingle();
+    if (!pw?.password_hash || pw.password_hash !== sha(data.password)) {
       throw new Error("Wrong password");
     }
     await supabaseAdmin
