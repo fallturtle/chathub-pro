@@ -135,7 +135,7 @@ export function MessageComposer({
           const id = await insertMessage({ body: `📊 Poll: ${q}` });
           if (!id) return;
           const { data: poll, error } = await supabase.from("polls").insert({ message_id: id, question: q, kind }).select("id").single();
-          if (error || !poll) return toast.error(error?.message ?? "Poll failed");
+          if (error || !poll) { toast.error(error?.message ?? "Poll failed"); return; }
           await supabase.from("poll_options").insert(opts.map((label, i) => ({ poll_id: poll.id, label, position: i })));
           setBody(""); onClearReply?.();
         }}
