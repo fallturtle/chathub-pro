@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { loginWithIdentifier } from "@/lib/chat.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +15,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const nav = useNavigate();
+  const login = useServerFn(loginWithIdentifier);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,21 +23,18 @@ function LoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    let email = identifier.trim();
-    if (!email.includes("@")) {
-      try {
-        const { resolveUsernameEmail } = await import("@/lib/chat.functions");
-        const res = await resolveUsernameEmail({ data: { username: email } });
-        email = res.email;
-      } catch (err: any) {
-        setLoading(false);
-        toast.error(err?.message ?? "No account with that username");
-        return;
-      }
+    try {
+      const session = await login({ data: { identifier: identifier.trim(), password } });
+      const { error } = await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setLoading(false);
+      return toast.error(err?.message ?? "Invalid login");
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
     toast.success("Welcome back");
     nav({ to: "/app" });
   };
