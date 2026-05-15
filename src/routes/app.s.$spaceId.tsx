@@ -1,8 +1,10 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { setChannelPassword } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Plus, Settings, Users, Calendar, Bot, ChevronDown } from "lucide-react";
+import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Plus, Settings, Users, Calendar, Bot, ChevronDown, Search, Tag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -84,6 +86,8 @@ function SpaceLayout() {
             {canManage && <DropdownMenuItem onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />Create channel</DropdownMenuItem>}
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/members", params: { spaceId } })}><Users className="h-4 w-4 mr-2" />Members</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/events", params: { spaceId } })}><Calendar className="h-4 w-4 mr-2" />Events</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/search", params: { spaceId } })}><Search className="h-4 w-4 mr-2" />Search messages</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/tags", params: { spaceId } })}><Tag className="h-4 w-4 mr-2" />Custom tags</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/bot", params: { spaceId } })}><Bot className="h-4 w-4 mr-2" />Bot</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigator.clipboard.writeText(joinCode).then(() => toast.success("Copied join code"))} disabled={!joinCode}>Copy join code</DropdownMenuItem>
@@ -135,16 +139,23 @@ function SpaceLayout() {
 function CreateChannelDialog({ open, onOpenChange, spaceId, onCreated }: { open: boolean; onOpenChange: (v: boolean) => void; spaceId: string; onCreated: () => void }) {
   const [name, setName] = useState("");
   const [type, setType] = useState<"general" | "announcement" | "rules" | "links" | "locked">("general");
+  const [pwd, setPwd] = useState("");
   const [busy, setBusy] = useState(false);
+  const setPasswordFn = useServerFn(setChannelPassword);
 
   const submit = async () => {
+    if (type === "locked" && !pwd.trim()) return toast.error("Locked channels require a password");
     setBusy(true);
     const slug = name.toLowerCase().replace(/[^a-z0-9-]+/g, "-").slice(0, 32);
-    const { error } = await supabase.from("channels").insert({ space_id: spaceId, name: slug || "channel", type });
+    const { data: created, error } = await supabase.from("channels").insert({ space_id: spaceId, name: slug || "channel", type }).select("id").single();
     setBusy(false);
     if (error) return toast.error(error.message);
+    if (type === "locked" && created?.id) {
+      try { await setPasswordFn({ data: { channelId: created.id, password: pwd } }); }
+      catch (e: any) { toast.error(e?.message ?? "Could not set password"); }
+    }
     toast.success("Channel created");
-    setName(""); setType("general");
+    setName(""); setType("general"); setPwd("");
     onOpenChange(false);
     onCreated();
   };
@@ -171,6 +182,12 @@ function CreateChannelDialog({ open, onOpenChange, spaceId, onCreated }: { open:
               </SelectContent>
             </Select>
           </div>
+          {type === "locked" && (
+            <div>
+              <Label>Password</Label>
+              <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Required for locked channels" />
+            </div>
+          )}
           <Button className="w-full" onClick={submit} disabled={busy || !name.trim()}>Create</Button>
         </div>
       </DialogContent>
