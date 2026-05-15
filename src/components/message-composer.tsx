@@ -43,15 +43,41 @@ export function MessageComposer({
 
   const insertMessage = async (extra?: { body?: string }) => {
     if (!user) return null;
+    const text = extra?.body ?? body.trim();
     const payload: any = {
       author_id: user.id,
-      body: extra?.body ?? body.trim(),
+      body: text,
       parent_id: replyTo?.id ?? null,
     };
     if (channelId) payload.channel_id = channelId;
     if (dmThreadId) payload.dm_thread_id = dmThreadId;
     const { data, error } = await supabase.from("messages").insert(payload).select("id").single();
     if (error) { toast.error(error.message); return null; }
+    // Parse @mentions and @all
+    const mentionTargets = Array.from(text.matchAll(/@([a-z0-9_]{2,32}|all|here)/gi)).map((m) => m[1].toLowerCase());
+    if (mentionTargets.length && channelId) {
+      const usernames = Array.from(new Set(mentionTargets.filter((t) => t !== "all" && t !== "here")));
+      const wantsAll = mentionTargets.includes("all") || mentionTargets.includes("here");
+      const rows: any[] = [];
+      if (usernames.length) {
+        const { data: profs } = await supabase.from("profiles").select("id,username").in("username", usernames);
+        for (const p of profs ?? []) rows.push({ message_id: data.id, user_id: p.id, target: `@${p.username}` });
+      }
+      if (wantsAll) {
+        // Check space policy
+        const { data: ch } = await supabase.from("channels").select("space_id").eq("id", channelId).maybeSingle();
+        if (ch) {
+          const { data: sp } = await supabase.from("spaces").select("mention_all_policy").eq("id", ch.space_id).maybeSingle();
+          const policy = (sp as any)?.mention_all_policy ?? "managers";
+          const { data: me } = await supabase.from("space_members").select("role").eq("space_id", ch.space_id).eq("user_id", user.id).maybeSingle();
+          const myRole = (me as any)?.role ?? "member";
+          const allowed = policy === "everyone" || (policy === "managers" && (myRole === "manager" || myRole === "owner")) || (policy === "owner" && myRole === "owner");
+          if (allowed) rows.push({ message_id: data.id, user_id: null, target: "@all" });
+          else toast.warning("You can't @all in this space");
+        }
+      }
+      if (rows.length) await supabase.from("mentions").insert(rows);
+    }
     return data.id as string;
   };
 
