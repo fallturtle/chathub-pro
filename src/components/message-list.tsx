@@ -121,6 +121,16 @@ export function MessageList({
         await loadProfiles([m.author_id]);
         await loadExtras([m.id]);
         setMessages((prev) => prev.some((x) => x.id === m.id) ? prev : [...prev, m]);
+        // Browser notification (only when tab hidden, only for others' messages)
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted" && document.hidden && m.author_id !== user?.id) {
+          const prof = profiles[m.author_id];
+          try {
+            new Notification(prof?.display_name || prof?.username || "New message", {
+              body: m.body.slice(0, 140),
+              tag: m.id,
+            });
+          } catch {}
+        }
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages", filter: filterStr }, (p) => {
         setMessages((prev) => prev.map((m) => (m.id === (p.new as any).id ? { ...m, ...(p.new as Msg) } : m)));
