@@ -19,6 +19,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppSSpaceIdRouteImport } from './routes/app.s.$spaceId'
 import { Route as AppDmThreadIdRouteImport } from './routes/app.dm.$threadId'
 import { Route as AppSSpaceIdIndexRouteImport } from './routes/app.s.$spaceId.index'
+import { Route as AppSSpaceIdTagsRouteImport } from './routes/app.s.$spaceId.tags'
 import { Route as AppSSpaceIdSettingsRouteImport } from './routes/app.s.$spaceId.settings'
 import { Route as AppSSpaceIdSearchRouteImport } from './routes/app.s.$spaceId.search'
 import { Route as AppSSpaceIdMembersRouteImport } from './routes/app.s.$spaceId.members'
@@ -76,6 +77,11 @@ const AppSSpaceIdIndexRoute = AppSSpaceIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppSSpaceIdRoute,
 } as any)
+const AppSSpaceIdTagsRoute = AppSSpaceIdTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
 const AppSSpaceIdSettingsRoute = AppSSpaceIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
   '/app/s/$spaceId/': typeof AppSSpaceIdIndexRoute
   '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
   '/app/s/$spaceId': typeof AppSSpaceIdIndexRoute
   '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
   '/app/s/$spaceId/': typeof AppSSpaceIdIndexRoute
   '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/members'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId/tags'
     | '/app/s/$spaceId/'
     | '/app/s/$spaceId/c/$channelId'
   fileRoutesByTo: FileRoutesByTo
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/members'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId/tags'
     | '/app/s/$spaceId'
     | '/app/s/$spaceId/c/$channelId'
   id:
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/members'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId/tags'
     | '/app/s/$spaceId/'
     | '/app/s/$spaceId/c/$channelId'
   fileRoutesById: FileRoutesById
@@ -295,6 +307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSSpaceIdIndexRouteImport
       parentRoute: typeof AppSSpaceIdRoute
     }
+    '/app/s/$spaceId/tags': {
+      id: '/app/s/$spaceId/tags'
+      path: '/tags'
+      fullPath: '/app/s/$spaceId/tags'
+      preLoaderRoute: typeof AppSSpaceIdTagsRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
     '/app/s/$spaceId/settings': {
       id: '/app/s/$spaceId/settings'
       path: '/settings'
@@ -346,6 +365,7 @@ interface AppSSpaceIdRouteChildren {
   AppSSpaceIdMembersRoute: typeof AppSSpaceIdMembersRoute
   AppSSpaceIdSearchRoute: typeof AppSSpaceIdSearchRoute
   AppSSpaceIdSettingsRoute: typeof AppSSpaceIdSettingsRoute
+  AppSSpaceIdTagsRoute: typeof AppSSpaceIdTagsRoute
   AppSSpaceIdIndexRoute: typeof AppSSpaceIdIndexRoute
   AppSSpaceIdCChannelIdRoute: typeof AppSSpaceIdCChannelIdRoute
 }
@@ -356,6 +376,7 @@ const AppSSpaceIdRouteChildren: AppSSpaceIdRouteChildren = {
   AppSSpaceIdMembersRoute: AppSSpaceIdMembersRoute,
   AppSSpaceIdSearchRoute: AppSSpaceIdSearchRoute,
   AppSSpaceIdSettingsRoute: AppSSpaceIdSettingsRoute,
+  AppSSpaceIdTagsRoute: AppSSpaceIdTagsRoute,
   AppSSpaceIdIndexRoute: AppSSpaceIdIndexRoute,
   AppSSpaceIdCChannelIdRoute: AppSSpaceIdCChannelIdRoute,
 }
