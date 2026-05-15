@@ -80,14 +80,14 @@ function ChannelRoute() {
         {canManage && (
           <>
             <Button size="icon" variant="ghost" onClick={() => setEditOpen(true)}><Pencil className="h-4 w-4" /></Button>
-            {channel.type !== "general" && (
-              <Button size="icon" variant="ghost" onClick={async () => {
-                if (!confirm("Delete this channel?")) return;
-                const { error } = await supabase.from("channels").delete().eq("id", channelId);
-                if (error) toast.error(error.message);
-                else nav({ to: "/app/s/$spaceId", params: { spaceId } });
-              }}><Trash2 className="h-4 w-4" /></Button>
-            )}
+            <Button size="icon" variant="ghost" onClick={async () => {
+              const { count } = await supabase.from("channels").select("id", { count: "exact", head: true }).eq("space_id", spaceId);
+              if ((count ?? 0) <= 1) return toast.error("A space must have at least one channel");
+              if (!confirm("Delete this channel?")) return;
+              const { error } = await supabase.from("channels").delete().eq("id", channelId);
+              if (error) toast.error(error.message);
+              else nav({ to: "/app/s/$spaceId", params: { spaceId } });
+            }}><Trash2 className="h-4 w-4" /></Button>
           </>
         )}
         <Button size="icon" variant="ghost" onClick={() => setPinnedOpen(true)} title="Pinned"><Pin className="h-4 w-4" /></Button>
