@@ -19,7 +19,9 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppSSpaceIdRouteImport } from './routes/app.s.$spaceId'
 import { Route as AppDmThreadIdRouteImport } from './routes/app.dm.$threadId'
 import { Route as AppSSpaceIdIndexRouteImport } from './routes/app.s.$spaceId.index'
+import { Route as AppSSpaceIdTagsRouteImport } from './routes/app.s.$spaceId.tags'
 import { Route as AppSSpaceIdSettingsRouteImport } from './routes/app.s.$spaceId.settings'
+import { Route as AppSSpaceIdSearchRouteImport } from './routes/app.s.$spaceId.search'
 import { Route as AppSSpaceIdMembersRouteImport } from './routes/app.s.$spaceId.members'
 import { Route as AppSSpaceIdEventsRouteImport } from './routes/app.s.$spaceId.events'
 import { Route as AppSSpaceIdBotRouteImport } from './routes/app.s.$spaceId.bot'
@@ -75,9 +77,19 @@ const AppSSpaceIdIndexRoute = AppSSpaceIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppSSpaceIdRoute,
 } as any)
+const AppSSpaceIdTagsRoute = AppSSpaceIdTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
 const AppSSpaceIdSettingsRoute = AppSSpaceIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
+const AppSSpaceIdSearchRoute = AppSSpaceIdSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => AppSSpaceIdRoute,
 } as any)
 const AppSSpaceIdMembersRoute = AppSSpaceIdMembersRouteImport.update({
@@ -114,7 +126,9 @@ export interface FileRoutesByFullPath {
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
   '/app/s/$spaceId/': typeof AppSSpaceIdIndexRoute
   '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
@@ -129,7 +143,9 @@ export interface FileRoutesByTo {
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
   '/app/s/$spaceId': typeof AppSSpaceIdIndexRoute
   '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
@@ -147,7 +163,9 @@ export interface FileRoutesById {
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
+  '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
   '/app/s/$spaceId/': typeof AppSSpaceIdIndexRoute
   '/app/s/$spaceId/c/$channelId': typeof AppSSpaceIdCChannelIdRoute
 }
@@ -166,7 +184,9 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId/tags'
     | '/app/s/$spaceId/'
     | '/app/s/$spaceId/c/$channelId'
   fileRoutesByTo: FileRoutesByTo
@@ -181,7 +201,9 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId/tags'
     | '/app/s/$spaceId'
     | '/app/s/$spaceId/c/$channelId'
   id:
@@ -198,7 +220,9 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
+    | '/app/s/$spaceId/tags'
     | '/app/s/$spaceId/'
     | '/app/s/$spaceId/c/$channelId'
   fileRoutesById: FileRoutesById
@@ -283,11 +307,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSSpaceIdIndexRouteImport
       parentRoute: typeof AppSSpaceIdRoute
     }
+    '/app/s/$spaceId/tags': {
+      id: '/app/s/$spaceId/tags'
+      path: '/tags'
+      fullPath: '/app/s/$spaceId/tags'
+      preLoaderRoute: typeof AppSSpaceIdTagsRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
     '/app/s/$spaceId/settings': {
       id: '/app/s/$spaceId/settings'
       path: '/settings'
       fullPath: '/app/s/$spaceId/settings'
       preLoaderRoute: typeof AppSSpaceIdSettingsRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
+    '/app/s/$spaceId/search': {
+      id: '/app/s/$spaceId/search'
+      path: '/search'
+      fullPath: '/app/s/$spaceId/search'
+      preLoaderRoute: typeof AppSSpaceIdSearchRouteImport
       parentRoute: typeof AppSSpaceIdRoute
     }
     '/app/s/$spaceId/members': {
@@ -325,7 +363,9 @@ interface AppSSpaceIdRouteChildren {
   AppSSpaceIdBotRoute: typeof AppSSpaceIdBotRoute
   AppSSpaceIdEventsRoute: typeof AppSSpaceIdEventsRoute
   AppSSpaceIdMembersRoute: typeof AppSSpaceIdMembersRoute
+  AppSSpaceIdSearchRoute: typeof AppSSpaceIdSearchRoute
   AppSSpaceIdSettingsRoute: typeof AppSSpaceIdSettingsRoute
+  AppSSpaceIdTagsRoute: typeof AppSSpaceIdTagsRoute
   AppSSpaceIdIndexRoute: typeof AppSSpaceIdIndexRoute
   AppSSpaceIdCChannelIdRoute: typeof AppSSpaceIdCChannelIdRoute
 }
@@ -334,7 +374,9 @@ const AppSSpaceIdRouteChildren: AppSSpaceIdRouteChildren = {
   AppSSpaceIdBotRoute: AppSSpaceIdBotRoute,
   AppSSpaceIdEventsRoute: AppSSpaceIdEventsRoute,
   AppSSpaceIdMembersRoute: AppSSpaceIdMembersRoute,
+  AppSSpaceIdSearchRoute: AppSSpaceIdSearchRoute,
   AppSSpaceIdSettingsRoute: AppSSpaceIdSettingsRoute,
+  AppSSpaceIdTagsRoute: AppSSpaceIdTagsRoute,
   AppSSpaceIdIndexRoute: AppSSpaceIdIndexRoute,
   AppSSpaceIdCChannelIdRoute: AppSSpaceIdCChannelIdRoute,
 }
@@ -369,13 +411,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

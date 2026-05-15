@@ -20,8 +20,17 @@ function MembersPage() {
   const [myRole, setMyRole] = useState<string>("member");
 
   const load = async () => {
-    const { data } = await supabase.from("space_members").select("user_id, role, banned, muted_until, profile:profiles!user_id(id,username,display_name,avatar_color)").eq("space_id", spaceId);
-    setMembers(data ?? []);
+    const { data } = await supabase.from("space_members").select("user_id, role, banned, muted_until").eq("space_id", spaceId);
+    const list = data ?? [];
+    const ids = list.map((m: any) => m.user_id);
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id,username,display_name,avatar_color").in("id", ids);
+      const map: Record<string, any> = {};
+      for (const p of profs ?? []) map[p.id] = p;
+      setMembers(list.map((m: any) => ({ ...m, profile: map[m.user_id] })));
+    } else {
+      setMembers(list);
+    }
   };
   useEffect(() => {
     load();
@@ -79,23 +88,28 @@ function MembersPage() {
         </div>
         <div className="text-xs text-muted-foreground truncate">@{m.profile?.username}</div>
       </div>
-      {m.user_id !== user?.id && (
+      {m.user_id !== user?.id ? (
         <div className="flex gap-1 shrink-0">
           <Button size="sm" variant="ghost" onClick={() => dm(m.user_id)}>DM</Button>
-          {canManage && m.role !== "owner" && (
+          {canManage && (
             <>
-              {isOwner && (
-                m.role === "manager"
-                  ? <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "member")}>Demote</Button>
-                  : <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "manager")}>Promote</Button>
+              {isOwner && m.role === "owner" && <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "manager")}>Demote owner</Button>}
+              {isOwner && m.role === "manager" && <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "owner")}>Make owner</Button>}
+              {m.role === "manager" && <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "member")}>Demote</Button>}
+              {m.role === "member" && <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "manager")}>Promote</Button>}
+              {m.role !== "owner" && (
+                <>
+                  {m.banned
+                    ? <Button size="sm" variant="ghost" onClick={() => unban(m.user_id)}>Unban</Button>
+                    : <Button size="sm" variant="ghost" onClick={() => ban(m.user_id)}>Ban</Button>}
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => kick(m.user_id)}>Kick</Button>
+                </>
               )}
-              {m.banned
-                ? <Button size="sm" variant="ghost" onClick={() => unban(m.user_id)}>Unban</Button>
-                : <Button size="sm" variant="ghost" onClick={() => ban(m.user_id)}>Ban</Button>}
-              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => kick(m.user_id)}>Kick</Button>
             </>
           )}
         </div>
+      ) : (
+        <span className="text-xs text-muted-foreground shrink-0">You</span>
       )}
     </div>
   );
