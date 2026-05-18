@@ -42,9 +42,15 @@ function ChannelRoute() {
   useEffect(() => {
     if (!user) return;
     reload();
+    setHasAccess(false); // lock every time the channel is entered
+    setPwd("");
     supabase.from("space_members").select("role").eq("space_id", spaceId).eq("user_id", user.id).maybeSingle().then(({ data }) => setRole((data as any)?.role ?? "member"));
-    supabase.from("channel_access").select("user_id").eq("channel_id", channelId).eq("user_id", user.id).maybeSingle().then(({ data }) => setHasAccess(!!data));
     supabase.from("filters_blocked").select("word").eq("space_id", spaceId).then(({ data }) => setBlocked((data ?? []).map((r: any) => r.word)));
+    // Revoke any prior unlock so leaving auto-locks
+    supabase.from("channel_access").delete().match({ channel_id: channelId, user_id: user.id });
+    return () => {
+      supabase.from("channel_access").delete().match({ channel_id: channelId, user_id: user.id });
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId, spaceId, user]);
 

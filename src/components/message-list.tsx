@@ -55,22 +55,22 @@ export function MessageList({
     if (data) setProfiles((p) => { const n = { ...p }; for (const x of data) n[x.id] = x; return n; });
   };
 
-  const loadExtras = async (mids: string[]) => {
+  const loadExtras = async (mids: string[], replace = false) => {
     if (!mids.length) return;
     const [r, a, p] = await Promise.all([
       supabase.from("reactions").select("message_id,emoji,user_id").in("message_id", mids),
       supabase.from("attachments").select("*").in("message_id", mids),
       supabase.from("polls").select("*").in("message_id", mids),
     ]);
-    const grouped: Record<string, any[]> = {};
-    for (const x of r.data ?? []) (grouped[x.message_id] ??= []).push(x);
-    setReactions(grouped);
+    const rg: Record<string, any[]> = {};
+    for (const x of r.data ?? []) (rg[x.message_id] ??= []).push(x);
+    setReactions((prev) => (replace ? rg : { ...prev, ...rg }));
     const at: Record<string, Att[]> = {};
     for (const x of a.data ?? []) (at[x.message_id] ??= []).push(x as Att);
-    setAttachments(at);
+    setAttachments((prev) => (replace ? at : { ...prev, ...at }));
     const pls: Record<string, Poll> = {};
     for (const x of p.data ?? []) pls[x.message_id] = x as Poll;
-    setPolls(pls);
+    setPolls((prev) => (replace ? pls : { ...prev, ...pls }));
     const pollIds = (p.data ?? []).map((x: any) => x.id);
     if (pollIds.length) {
       const [opts, votes] = await Promise.all([
@@ -80,10 +80,10 @@ export function MessageList({
       const og: Record<string, PollOpt[]> = {};
       for (const o of opts.data ?? []) (og[o.poll_id] ??= []).push(o as PollOpt);
       for (const k in og) og[k].sort((x, y) => (x.position ?? 0) - (y.position ?? 0));
-      setPollOpts(og);
+      setPollOpts((prev) => (replace ? og : { ...prev, ...og }));
       const vg: Record<string, PollVote[]> = {};
       for (const v of votes.data ?? []) (vg[v.poll_id] ??= []).push(v as PollVote);
-      setPollVotes(vg);
+      setPollVotes((prev) => (replace ? vg : { ...prev, ...vg }));
     }
   };
 
@@ -97,7 +97,7 @@ export function MessageList({
       const list = (data ?? []) as Msg[];
       setMessages(list);
       await loadProfiles(list.map((m) => m.author_id));
-      await loadExtras(list.map((m) => m.id));
+      await loadExtras(list.map((m) => m.id), true);
       // also load parent authors for replies
       const parentIds = list.map((m) => m.parent_id).filter(Boolean) as string[];
       if (parentIds.length) {
@@ -147,14 +147,15 @@ export function MessageList({
           setReactions(g);
         }
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "poll_votes" }, async () => {
-        const ids = Object.values(polls).map((p) => p.id);
-        if (ids.length) {
-          const { data } = await supabase.from("poll_votes").select("poll_id,option_id,user_id").in("poll_id", ids);
-          const vg: Record<string, PollVote[]> = {};
-          for (const v of data ?? []) (vg[v.poll_id] ??= []).push(v as PollVote);
-          setPollVotes(vg);
-        }
+      .on("postgres_changes", { event: "*", schema: "public", table: "poll_votes" }, async (payload) => {
+        const changedPollId =
+          (payload.new as any)?.poll_id ?? (payload.old as any)?.poll_id;
+        if (!changedPollId) return;
+        const { data } = await supabase
+          .from("poll_votes")
+          .select("poll_id,option_id,user_id")
+          .eq("poll_id", changedPollId);
+        setPollVotes((prev) => ({ ...prev, [changedPollId]: (data ?? []) as PollVote[] }));
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
