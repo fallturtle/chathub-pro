@@ -149,8 +149,8 @@ export const startDm = createServerFn({ method: "POST" })
       .single();
     if (error || !t) throw new Error(error?.message ?? "Failed");
     await supabaseAdmin.from("dm_participants").insert([
-      { thread_id: t.id, user_id: userId },
-      { thread_id: t.id, user_id: data.otherUserId },
+      { thread_id: t.id, user_id: userId, accepted: true },
+      { thread_id: t.id, user_id: data.otherUserId, accepted: false },
     ]);
     return { threadId: t.id };
   });
