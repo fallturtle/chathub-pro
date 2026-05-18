@@ -2,35 +2,41 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Send, Smile, Paperclip, BarChart3, X, Reply } from "lucide-react";
+import { Send, Smile, Paperclip, BarChart3, X, Reply, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { EmojiPicker } from "./emoji-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export type ReplyTarget = { id: string; body: string; authorName: string } | null;
 
+type SlashCmd = { name: string; desc: string; run?: (args: string, ctx: { body: string }) => string | Promise<string> };
+
+const SLASH_COMMANDS: SlashCmd[] = [
+  { name: "me", desc: "Action message — /me waves", run: (args) => `*${args || "…"}*` },
+  { name: "shrug", desc: "Append ¯\\_(ツ)_/¯", run: (args) => `${args} ¯\\_(ツ)_/¯`.trim() },
+  { name: "tableflip", desc: "(╯°□°)╯︵ ┻━┻", run: (args) => `${args} (╯°□°)╯︵ ┻━┻`.trim() },
+  { name: "unflip", desc: "┬─┬ノ( º _ ºノ)", run: (args) => `${args} ┬─┬ノ( º _ ºノ)`.trim() },
+  { name: "lenny", desc: "( ͡° ͜ʖ ͡°)", run: (args) => `${args} ( ͡° ͜ʖ ͡°)`.trim() },
+  { name: "poll", desc: "Open the poll creator" },
+  { name: "help", desc: "List all slash commands" },
+  { name: "clear", desc: "Clear the composer" },
+];
+
 export function MessageComposer({
-  channelId,
-  dmThreadId,
-  disabled,
-  placeholder = "Message…",
-  replyTo,
-  onClearReply,
+  channelId, dmThreadId, disabled, placeholder = "Message…", replyTo, onClearReply,
 }: {
-  channelId?: string;
-  dmThreadId?: string;
-  disabled?: boolean;
-  placeholder?: string;
-  replyTo?: ReplyTarget;
-  onClearReply?: () => void;
+  channelId?: string; dmThreadId?: string; disabled?: boolean; placeholder?: string;
+  replyTo?: ReplyTarget; onClearReply?: () => void;
 }) {
   const { user } = useAuth();
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
-  const [showEmoji, setShowEmoji] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [plusOpen, setPlusOpen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -41,19 +47,30 @@ export function MessageComposer({
     }
   }, [body]);
 
+  // Slash command suggestions
+  const slashMatch = body.match(/^\/([a-z]*)$/i);
+  const suggestions = slashMatch ? SLASH_COMMANDS.filter((c) => c.name.startsWith(slashMatch[1].toLowerCase())) : [];
+
+  const applyCommand = async (cmd: SlashCmd, args: string) => {
+    if (cmd.name === "poll") { setPollOpen(true); setBody(""); return; }
+    if (cmd.name === "clear") { setBody(""); return; }
+    if (cmd.name === "help") {
+      setBody("");
+      toast.info(SLASH_COMMANDS.map((c) => `/${c.name} — ${c.desc}`).join("\n"));
+      return;
+    }
+    if (cmd.run) setBody(await cmd.run(args, { body }));
+    taRef.current?.focus();
+  };
+
   const insertMessage = async (extra?: { body?: string }) => {
     if (!user) return null;
     const text = extra?.body ?? body.trim();
-    const payload: any = {
-      author_id: user.id,
-      body: text,
-      parent_id: replyTo?.id ?? null,
-    };
+    const payload: any = { author_id: user.id, body: text, parent_id: replyTo?.id ?? null };
     if (channelId) payload.channel_id = channelId;
     if (dmThreadId) payload.dm_thread_id = dmThreadId;
     const { data, error } = await supabase.from("messages").insert(payload).select("id").single();
     if (error) { toast.error(error.message); return null; }
-    // Parse @mentions and @all
     const mentionTargets = Array.from(text.matchAll(/@([a-z0-9_]{2,32}|all|here)/gi)).map((m) => m[1].toLowerCase());
     if (mentionTargets.length && channelId) {
       const usernames = Array.from(new Set(mentionTargets.filter((t) => t !== "all" && t !== "here")));
@@ -64,7 +81,6 @@ export function MessageComposer({
         for (const p of profs ?? []) rows.push({ message_id: data.id, user_id: p.id, target: `@${p.username}` });
       }
       if (wantsAll) {
-        // Check space policy
         const { data: ch } = await supabase.from("channels").select("space_id").eq("id", channelId).maybeSingle();
         if (ch) {
           const { data: sp } = await supabase.from("spaces").select("mention_all_policy").eq("id", ch.space_id).maybeSingle();
@@ -83,6 +99,12 @@ export function MessageComposer({
 
   const send = async () => {
     if (!body.trim() || sending) return;
+    // Check for slash command match
+    const m = body.match(/^\/([a-z]+)(?:\s+(.*))?$/i);
+    if (m) {
+      const cmd = SLASH_COMMANDS.find((c) => c.name === m[1].toLowerCase());
+      if (cmd) { await applyCommand(cmd, m[2] ?? ""); return; }
+    }
     setSending(true);
     const id = await insertMessage();
     setSending(false);
@@ -120,7 +142,7 @@ export function MessageComposer({
   }
 
   return (
-    <div className="border-t">
+    <div className="border-t relative">
       {replyTo && (
         <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/40 border-b text-xs">
           <Reply className="h-3 w-3 text-primary" />
@@ -129,26 +151,52 @@ export function MessageComposer({
           <button onClick={onClearReply} className="hover:bg-accent rounded p-0.5"><X className="h-3 w-3" /></button>
         </div>
       )}
+      {suggestions.length > 0 && (
+        <div className="absolute bottom-full left-3 right-3 mb-1 z-30 bg-popover border rounded-md shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+          {suggestions.map((c) => (
+            <button
+              key={c.name}
+              onClick={() => { setBody(`/${c.name} `); taRef.current?.focus(); }}
+              className="w-full text-left px-3 py-1.5 hover:bg-accent text-sm flex items-center gap-2"
+            >
+              <span className="font-mono text-primary">/{c.name}</span>
+              <span className="text-xs text-muted-foreground truncate">{c.desc}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="p-3">
-        <div className="flex gap-2 items-end relative">
-          <div className="relative flex">
-            <button onClick={() => fileRef.current?.click()} className="p-2 hover:bg-accent rounded" title="Attach file"><Paperclip className="h-5 w-5" /></button>
-            <input ref={fileRef} type="file" hidden onChange={onPickFile} />
-            <button onClick={() => setShowEmoji((v) => !v)} className="p-2 hover:bg-accent rounded" title="Emoji"><Smile className="h-5 w-5" /></button>
-            <button onClick={() => setPollOpen(true)} className="p-2 hover:bg-accent rounded" title="Poll"><BarChart3 className="h-5 w-5" /></button>
-            {showEmoji && (
-              <div className="absolute bottom-12 left-0 z-20">
-                <EmojiPicker onSelect={(e) => { setBody((b) => b + e); setShowEmoji(false); taRef.current?.focus(); }} />
-              </div>
-            )}
-          </div>
+        <div className="flex gap-2 items-end">
+          <Popover open={plusOpen} onOpenChange={setPlusOpen}>
+            <PopoverTrigger asChild>
+              <button className="p-2 hover:bg-accent rounded" title="Add"><Plus className="h-5 w-5" /></button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="start" className="w-44 p-1">
+              <button onClick={() => { setPlusOpen(false); fileRef.current?.click(); }} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded text-sm"><Paperclip className="h-4 w-4" /> File or image</button>
+              <button onClick={() => { setPlusOpen(false); setPollOpen(true); }} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded text-sm"><BarChart3 className="h-4 w-4" /> Poll</button>
+              <button onClick={() => { setPlusOpen(false); setShowEmoji(true); }} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded text-sm"><Smile className="h-4 w-4" /> Emoji</button>
+            </PopoverContent>
+          </Popover>
+          <input ref={fileRef} type="file" hidden onChange={onPickFile} />
+          {showEmoji && (
+            <div className="absolute bottom-16 left-3 z-30">
+              <EmojiPicker onSelect={(e) => { setBody((b) => b + e); setShowEmoji(false); taRef.current?.focus(); }} />
+            </div>
+          )}
           <textarea
             ref={taRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            onKeyDown={(e) => {
+              if (e.key === "Tab" && suggestions.length > 0) {
+                e.preventDefault();
+                setBody(`/${suggestions[0].name} `);
+                return;
+              }
+              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+            }}
             rows={1}
-            placeholder={placeholder}
+            placeholder={placeholder + "  ·  Try /help"}
             className="flex-1 resize-none rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <Button onClick={send} disabled={sending || !body.trim()}><Send className="h-4 w-4" /></Button>

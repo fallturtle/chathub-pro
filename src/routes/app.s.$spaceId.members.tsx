@@ -6,6 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { startDm } from "@/lib/chat.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tag, Check } from "lucide-react";
 
 export const Route = createFileRoute("/app/s/$spaceId/members")({
   component: MembersPage,
@@ -18,6 +20,8 @@ function MembersPage() {
   const startDmFn = useServerFn(startDm);
   const [members, setMembers] = useState<any[]>([]);
   const [myRole, setMyRole] = useState<string>("member");
+  const [tags, setTags] = useState<any[]>([]);
+  const [memberTags, setMemberTags] = useState<Record<string, string[]>>({});
 
   const load = async () => {
     const { data } = await supabase.from("space_members").select("user_id, role, banned, muted_until").eq("space_id", spaceId);
@@ -31,6 +35,12 @@ function MembersPage() {
     } else {
       setMembers(list);
     }
+    const { data: mt } = await supabase.from("member_tags").select("user_id, tag_id").eq("space_id", spaceId);
+    const mg: Record<string, string[]> = {};
+    for (const r of mt ?? []) (mg[r.user_id] ??= []).push(r.tag_id);
+    setMemberTags(mg);
+    const { data: tg } = await supabase.from("custom_tags").select("*").eq("space_id", spaceId).order("label");
+    setTags(tg ?? []);
   };
   useEffect(() => {
     load();
@@ -64,6 +74,13 @@ function MembersPage() {
     catch (e: any) { toast.error(e?.message ?? "Failed"); }
   };
 
+  const toggleTag = async (uid: string, tagId: string) => {
+    const has = (memberTags[uid] ?? []).includes(tagId);
+    if (has) await supabase.from("member_tags").delete().match({ space_id: spaceId, user_id: uid, tag_id: tagId });
+    else await supabase.from("member_tags").insert({ space_id: spaceId, user_id: uid, tag_id: tagId, assigned_by: user?.id });
+    load();
+  };
+
   const owners = members.filter((m) => m.role === "owner");
   const managers = members.filter((m) => m.role === "manager");
   const regulars = members.filter((m) => m.role === "member");
@@ -83,6 +100,11 @@ function MembersPage() {
         <div className="font-medium flex items-center gap-2 flex-wrap">
           <span className="truncate">{m.profile?.display_name || m.profile?.username}</span>
           {roleBadge(m.role)}
+          {(memberTags[m.user_id] ?? []).map((tid) => {
+            const t = tags.find((x) => x.id === tid);
+            if (!t) return null;
+            return <span key={tid} className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded text-white" style={{ background: t.color }}>{t.label}</span>;
+          })}
           {m.banned && <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground">Banned</span>}
           {m.muted_until && new Date(m.muted_until) > new Date() && <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-muted">Muted</span>}
         </div>
@@ -93,6 +115,26 @@ function MembersPage() {
           <Button size="sm" variant="ghost" onClick={() => dm(m.user_id)}>DM</Button>
           {canManage && (
             <>
+              {tags.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button size="sm" variant="ghost"><Tag className="h-4 w-4" /></Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-56 p-1">
+                    <div className="text-xs text-muted-foreground px-2 py-1">Assign tags</div>
+                    {tags.map((t) => {
+                      const on = (memberTags[m.user_id] ?? []).includes(t.id);
+                      return (
+                        <button key={t.id} onClick={() => toggleTag(m.user_id, t.id)} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded text-sm">
+                          <span className="h-3 w-3 rounded-full" style={{ background: t.color }} />
+                          <span className="flex-1 text-left">{t.label}</span>
+                          {on && <Check className="h-3 w-3" />}
+                        </button>
+                      );
+                    })}
+                  </PopoverContent>
+                </Popover>
+              )}
               {isOwner && m.role === "owner" && <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "manager")}>Demote owner</Button>}
               {isOwner && m.role === "manager" && <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "owner")}>Make owner</Button>}
               {m.role === "manager" && <Button size="sm" variant="ghost" onClick={() => setRole(m.user_id, "member")}>Demote</Button>}
