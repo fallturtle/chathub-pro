@@ -244,16 +244,19 @@ export type Database = {
       }
       dm_participants: {
         Row: {
+          accepted: boolean
           last_read_at: string | null
           thread_id: string
           user_id: string
         }
         Insert: {
+          accepted?: boolean
           last_read_at?: string | null
           thread_id: string
           user_id: string
         }
         Update: {
+          accepted?: boolean
           last_read_at?: string | null
           thread_id?: string
           user_id?: string
@@ -448,6 +451,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      member_tags: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          space_id: string
+          tag_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          space_id: string
+          tag_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          space_id?: string
+          tag_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       mentions: {
         Row: {
