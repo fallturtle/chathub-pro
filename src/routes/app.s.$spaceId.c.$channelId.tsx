@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmAction } from "@/components/confirm-action";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -58,7 +59,7 @@ function ChannelRoute() {
 
   const Icon = ICONS[channel.type] ?? Hash;
   const canManage = role === "owner" || role === "manager";
-  const isLocked = channel.type === "locked" && !hasAccess && !canManage;
+  const isLocked = channel.type === "locked" && !hasAccess;
   const isAnnouncement = channel.type === "announcement";
   const canPost = !isLocked && (!isAnnouncement || canManage);
 
@@ -86,14 +87,15 @@ function ChannelRoute() {
         {canManage && (
           <>
             <Button size="icon" variant="ghost" onClick={() => setEditOpen(true)}><Pencil className="h-4 w-4" /></Button>
-            <Button size="icon" variant="ghost" onClick={async () => {
+            <ConfirmAction title="Delete this channel?" description="Messages and channel content here may be removed. This cannot be undone." confirmLabel="Delete channel" onConfirm={async () => {
               const { count } = await supabase.from("channels").select("id", { count: "exact", head: true }).eq("space_id", spaceId);
               if ((count ?? 0) <= 1) return toast.error("A space must have at least one channel");
-              if (!confirm("Delete this channel?")) return;
               const { error } = await supabase.from("channels").delete().eq("id", channelId);
               if (error) toast.error(error.message);
               else nav({ to: "/app/s/$spaceId", params: { spaceId } });
-            }}><Trash2 className="h-4 w-4" /></Button>
+            }}>
+              <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
+            </ConfirmAction>
           </>
         )}
         <Button size="icon" variant="ghost" onClick={() => setPinnedOpen(true)} title="Pinned"><Pin className="h-4 w-4" /></Button>
