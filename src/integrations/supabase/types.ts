@@ -96,6 +96,24 @@ export type Database = {
           },
         ]
       }
+      bot_webhook_tokens: {
+        Row: {
+          created_at: string
+          token_hash: string
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          token_hash: string
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          token_hash?: string
+          webhook_id?: string
+        }
+        Relationships: []
+      }
       bot_webhooks: {
         Row: {
           avatar_url: string | null
@@ -107,7 +125,6 @@ export type Database = {
           last_used_at: string | null
           name: string
           space_id: string
-          token_hash: string
         }
         Insert: {
           avatar_url?: string | null
@@ -119,7 +136,6 @@ export type Database = {
           last_used_at?: string | null
           name: string
           space_id: string
-          token_hash: string
         }
         Update: {
           avatar_url?: string | null
@@ -131,7 +147,6 @@ export type Database = {
           last_used_at?: string | null
           name?: string
           space_id?: string
-          token_hash?: string
         }
         Relationships: []
       }
