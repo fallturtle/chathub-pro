@@ -96,6 +96,45 @@ export type Database = {
           },
         ]
       }
+      bot_webhooks: {
+        Row: {
+          avatar_url: string | null
+          channel_id: string | null
+          created_at: string
+          created_by: string
+          enabled: boolean
+          id: string
+          last_used_at: string | null
+          name: string
+          space_id: string
+          token_hash: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          channel_id?: string | null
+          created_at?: string
+          created_by: string
+          enabled?: boolean
+          id?: string
+          last_used_at?: string | null
+          name: string
+          space_id: string
+          token_hash: string
+        }
+        Update: {
+          avatar_url?: string | null
+          channel_id?: string | null
+          created_at?: string
+          created_by?: string
+          enabled?: boolean
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          space_id?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
       channel_access: {
         Row: {
           channel_id: string
@@ -413,6 +452,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      forum_answers: {
+        Row: {
+          accepted: boolean
+          body: string
+          created_at: string
+          id: string
+          question_id: string
+        }
+        Insert: {
+          accepted?: boolean
+          body: string
+          created_at?: string
+          id?: string
+          question_id: string
+        }
+        Update: {
+          accepted?: boolean
+          body?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+        }
+        Relationships: []
+      }
+      forum_questions: {
+        Row: {
+          answered: boolean
+          body: string
+          created_at: string
+          id: string
+          space_id: string
+          title: string
+        }
+        Insert: {
+          answered?: boolean
+          body?: string
+          created_at?: string
+          id?: string
+          space_id: string
+          title: string
+        }
+        Update: {
+          answered?: boolean
+          body?: string
+          created_at?: string
+          id?: string
+          space_id?: string
+          title?: string
+        }
+        Relationships: []
       }
       invites: {
         Row: {
@@ -928,6 +1018,10 @@ export type Database = {
         Returns: boolean
       }
       is_dm_participant: {
+        Args: { _thread: string; _user: string }
+        Returns: boolean
+      }
+      is_dm_participant_any: {
         Args: { _thread: string; _user: string }
         Returns: boolean
       }
