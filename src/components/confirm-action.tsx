@@ -23,7 +23,7 @@ export function ConfirmAction({
   title: string;
   description: string;
   confirmLabel?: string;
-  onConfirm: () => void | Promise<void>;
+  onConfirm: () => void | Promise<unknown>;
 }) {
   return (
     <AlertDialog>
