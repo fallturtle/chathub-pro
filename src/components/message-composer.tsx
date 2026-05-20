@@ -15,11 +15,11 @@ export type ReplyTarget = { id: string; body: string; authorName: string } | nul
 type SlashCmd = { name: string; desc: string; run?: (args: string, ctx: { body: string }) => string | Promise<string> };
 
 const SLASH_COMMANDS: SlashCmd[] = [
-  { name: "me", desc: "Action message — /me waves", run: (args) => `*${args || "…"}*` },
-  { name: "shrug", desc: "Append ¯\\_(ツ)_/¯", run: (args) => `${args} ¯\\_(ツ)_/¯`.trim() },
-  { name: "tableflip", desc: "(╯°□°)╯︵ ┻━┻", run: (args) => `${args} (╯°□°)╯︵ ┻━┻`.trim() },
-  { name: "unflip", desc: "┬─┬ノ( º _ ºノ)", run: (args) => `${args} ┬─┬ノ( º _ ºノ)`.trim() },
-  { name: "lenny", desc: "( ͡° ͜ʖ ͡°)", run: (args) => `${args} ( ͡° ͜ʖ ͡°)`.trim() },
+  { name: "decision", desc: "Post a highlighted decision", run: (args) => `📌 Decision: ${args || "…"}` },
+  { name: "question", desc: "Format a channel question", run: (args) => `❓ Question: ${args || "…"}` },
+  { name: "todo", desc: "Add a quick task line", run: (args) => `☐ ${args || "Task"}` },
+  { name: "quote", desc: "Quote text cleanly", run: (args) => `> ${args || "quoted text"}` },
+  { name: "checkin", desc: "Share a quick status", run: (args) => `✅ Check-in: ${args || "all good"}` },
   { name: "poll", desc: "Open the poll creator" },
   { name: "help", desc: "List all slash commands" },
   { name: "clear", desc: "Clear the composer" },
@@ -180,7 +180,7 @@ export function MessageComposer({
           <input ref={fileRef} type="file" hidden onChange={onPickFile} />
           {showEmoji && (
             <div className="absolute bottom-16 left-3 z-30">
-              <EmojiPicker onSelect={(e) => { setBody((b) => b + e); setShowEmoji(false); taRef.current?.focus(); }} />
+              <EmojiPicker onClose={() => setShowEmoji(false)} onSelect={(e) => { setBody((b) => b + e); setShowEmoji(false); taRef.current?.focus(); }} />
             </div>
           )}
           <textarea
