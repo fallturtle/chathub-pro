@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Smile, Heart, Cat, Pizza, Plane, Lightbulb, Hash, Flag, Activity } from "lucide-react";
+import { Smile, Cat, Pizza, Plane, Lightbulb, Hash, Flag, Activity, X } from "lucide-react";
 
 const CATEGORIES: { id: string; icon: any; emojis: string[] }[] = [
   {
@@ -44,7 +44,7 @@ const CATEGORIES: { id: string; icon: any; emojis: string[] }[] = [
   },
 ];
 
-export function EmojiPicker({ onSelect }: { onSelect: (e: string) => void }) {
+export function EmojiPicker({ onSelect, onClose }: { onSelect: (e: string) => void; onClose?: () => void }) {
   const [active, setActive] = useState(0);
   const cat = CATEGORIES[active];
   return (
@@ -63,6 +63,11 @@ export function EmojiPicker({ onSelect }: { onSelect: (e: string) => void }) {
             </button>
           );
         })}
+        {onClose && (
+          <button onClick={onClose} title="Close" className="p-2 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
       <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b">{cat.id}</div>
       <div className="flex-1 overflow-y-auto p-2 grid grid-cols-8 gap-0.5 content-start">
