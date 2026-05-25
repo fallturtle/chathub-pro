@@ -25,6 +25,7 @@ import { Route as AppSSpaceIdSearchRouteImport } from './routes/app.s.$spaceId.s
 import { Route as AppSSpaceIdMembersRouteImport } from './routes/app.s.$spaceId.members'
 import { Route as AppSSpaceIdEventsRouteImport } from './routes/app.s.$spaceId.events'
 import { Route as AppSSpaceIdBotRouteImport } from './routes/app.s.$spaceId.bot'
+import { Route as ApiPublicBotTokenRouteImport } from './routes/api/public/bot/$token'
 import { Route as AppSSpaceIdCChannelIdRouteImport } from './routes/app.s.$spaceId.c.$channelId'
 
 const SignupRoute = SignupRouteImport.update({
@@ -107,6 +108,11 @@ const AppSSpaceIdBotRoute = AppSSpaceIdBotRouteImport.update({
   path: '/bot',
   getParentRoute: () => AppSSpaceIdRoute,
 } as any)
+const ApiPublicBotTokenRoute = ApiPublicBotTokenRouteImport.update({
+  id: '/api/public/bot/$token',
+  path: '/api/public/bot/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSSpaceIdCChannelIdRoute = AppSSpaceIdCChannelIdRouteImport.update({
   id: '/c/$channelId',
   path: '/c/$channelId',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
   '/app/s/$spaceId': typeof AppSSpaceIdRouteWithChildren
+  '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
+  '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
   '/app/s/$spaceId': typeof AppSSpaceIdRouteWithChildren
+  '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/dm/$threadId'
     | '/app/s/$spaceId'
+    | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/members'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app'
     | '/app/dm/$threadId'
+    | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/members'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/dm/$threadId'
     | '/app/s/$spaceId'
+    | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/members'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  ApiPublicBotTokenRoute: typeof ApiPublicBotTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSSpaceIdBotRouteImport
       parentRoute: typeof AppSSpaceIdRoute
     }
+    '/api/public/bot/$token': {
+      id: '/api/public/bot/$token'
+      path: '/api/public/bot/$token'
+      fullPath: '/api/public/bot/$token'
+      preLoaderRoute: typeof ApiPublicBotTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/s/$spaceId/c/$channelId': {
       id: '/app/s/$spaceId/c/$channelId'
       path: '/c/$channelId'
@@ -407,7 +427,18 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  ApiPublicBotTokenRoute: ApiPublicBotTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
