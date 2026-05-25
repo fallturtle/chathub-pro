@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { setChannelPassword } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Plus, Settings, Users, Calendar, Bot, ChevronDown, Search, Tag } from "lucide-react";
+import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Plus, Settings, Users, Calendar, Bot, ChevronDown, Search, Tag, MessageCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ConfirmAction } from "@/components/confirm-action";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/s/$spaceId")({
@@ -88,21 +89,23 @@ function SpaceLayout() {
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/events", params: { spaceId } })}><Calendar className="h-4 w-4 mr-2" />Events</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/search", params: { spaceId } })}><Search className="h-4 w-4 mr-2" />Search messages</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/tags", params: { spaceId } })}><Tag className="h-4 w-4 mr-2" />Custom tags</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/forum", params: { spaceId } })}><MessageCircle className="h-4 w-4 mr-2" />Forum</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/bot", params: { spaceId } })}><Bot className="h-4 w-4 mr-2" />Bot</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigator.clipboard.writeText(joinCode).then(() => toast.success("Copied join code"))} disabled={!joinCode}>Copy join code</DropdownMenuItem>
             {canManage && <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/settings", params: { spaceId } })}><Settings className="h-4 w-4 mr-2" />Settings</DropdownMenuItem>}
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={async () => {
-                if (!confirm("Leave this space?")) return;
+            <ConfirmAction
+              title="Leave this space?"
+              description="You'll lose access to all channels here. You can rejoin later if it's public or you have a join code."
+              confirmLabel="Leave"
+              onConfirm={async () => {
                 await supabase.from("space_members").delete().match({ space_id: spaceId, user_id: user!.id });
                 nav({ to: "/app" });
               }}
             >
-              Leave space
-            </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Leave space</DropdownMenuItem>
+            </ConfirmAction>
           </DropdownMenuContent>
         </DropdownMenu>
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">

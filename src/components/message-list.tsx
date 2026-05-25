@@ -6,6 +6,8 @@ import { Pin, Trash2, SmilePlus, Reply, Pencil, Check, X, Download } from "lucid
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import type { ReplyTarget } from "./message-composer";
+import { linkify } from "@/lib/linkify";
+import { ConfirmAction } from "@/components/confirm-action";
 
 type Msg = {
   id: string; body: string; author_id: string; created_at: string | null;
@@ -263,7 +265,7 @@ export function MessageList({
                         </div>
                       ) : (
                         <div className="text-sm break-words whitespace-pre-wrap">
-                          {filterText(m.body)}
+                          {linkify(filterText(m.body))}
                           {m.edited_at && <span className="text-[10px] text-muted-foreground ml-1">(edited)</span>}
                           {m.pinned && <Pin className="inline h-3 w-3 ml-1 text-primary" />}
                         </div>
@@ -323,7 +325,9 @@ export function MessageList({
                             <button onClick={() => pinMsg(m)} className="p-1 hover:bg-accent rounded" title="Pin"><Pin className="h-4 w-4" /></button>
                           )}
                           {(canManage || m.author_id === user?.id) && (
-                            <button onClick={() => deleteMsg(m.id)} className="p-1 hover:bg-accent rounded text-destructive" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                            <ConfirmAction title="Delete this message?" description="It can't be recovered." onConfirm={() => deleteMsg(m.id)}>
+                              <button className="p-1 hover:bg-accent rounded text-destructive" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                            </ConfirmAction>
                           )}
                         </div>
                       )}

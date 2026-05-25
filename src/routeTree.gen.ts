@@ -23,8 +23,10 @@ import { Route as AppSSpaceIdTagsRouteImport } from './routes/app.s.$spaceId.tag
 import { Route as AppSSpaceIdSettingsRouteImport } from './routes/app.s.$spaceId.settings'
 import { Route as AppSSpaceIdSearchRouteImport } from './routes/app.s.$spaceId.search'
 import { Route as AppSSpaceIdMembersRouteImport } from './routes/app.s.$spaceId.members'
+import { Route as AppSSpaceIdForumRouteImport } from './routes/app.s.$spaceId.forum'
 import { Route as AppSSpaceIdEventsRouteImport } from './routes/app.s.$spaceId.events'
 import { Route as AppSSpaceIdBotRouteImport } from './routes/app.s.$spaceId.bot'
+import { Route as ApiPublicBotTokenRouteImport } from './routes/api/public/bot/$token'
 import { Route as AppSSpaceIdCChannelIdRouteImport } from './routes/app.s.$spaceId.c.$channelId'
 
 const SignupRoute = SignupRouteImport.update({
@@ -97,6 +99,11 @@ const AppSSpaceIdMembersRoute = AppSSpaceIdMembersRouteImport.update({
   path: '/members',
   getParentRoute: () => AppSSpaceIdRoute,
 } as any)
+const AppSSpaceIdForumRoute = AppSSpaceIdForumRouteImport.update({
+  id: '/forum',
+  path: '/forum',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
 const AppSSpaceIdEventsRoute = AppSSpaceIdEventsRouteImport.update({
   id: '/events',
   path: '/events',
@@ -106,6 +113,11 @@ const AppSSpaceIdBotRoute = AppSSpaceIdBotRouteImport.update({
   id: '/bot',
   path: '/bot',
   getParentRoute: () => AppSSpaceIdRoute,
+} as any)
+const ApiPublicBotTokenRoute = ApiPublicBotTokenRouteImport.update({
+  id: '/api/public/bot/$token',
+  path: '/api/public/bot/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppSSpaceIdCChannelIdRoute = AppSSpaceIdCChannelIdRouteImport.update({
   id: '/c/$channelId',
@@ -123,8 +135,10 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
   '/app/s/$spaceId': typeof AppSSpaceIdRouteWithChildren
+  '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
+  '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
@@ -140,8 +154,10 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
+  '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
+  '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
@@ -160,8 +176,10 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
   '/app/s/$spaceId': typeof AppSSpaceIdRouteWithChildren
+  '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
+  '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
@@ -181,8 +199,10 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/dm/$threadId'
     | '/app/s/$spaceId'
+    | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
+    | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
@@ -198,8 +218,10 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app'
     | '/app/dm/$threadId'
+    | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
+    | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
@@ -217,8 +239,10 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/dm/$threadId'
     | '/app/s/$spaceId'
+    | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
     | '/app/s/$spaceId/events'
+    | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
@@ -233,6 +257,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  ApiPublicBotTokenRoute: typeof ApiPublicBotTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -335,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSSpaceIdMembersRouteImport
       parentRoute: typeof AppSSpaceIdRoute
     }
+    '/app/s/$spaceId/forum': {
+      id: '/app/s/$spaceId/forum'
+      path: '/forum'
+      fullPath: '/app/s/$spaceId/forum'
+      preLoaderRoute: typeof AppSSpaceIdForumRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
     '/app/s/$spaceId/events': {
       id: '/app/s/$spaceId/events'
       path: '/events'
@@ -349,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSSpaceIdBotRouteImport
       parentRoute: typeof AppSSpaceIdRoute
     }
+    '/api/public/bot/$token': {
+      id: '/api/public/bot/$token'
+      path: '/api/public/bot/$token'
+      fullPath: '/api/public/bot/$token'
+      preLoaderRoute: typeof ApiPublicBotTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/s/$spaceId/c/$channelId': {
       id: '/app/s/$spaceId/c/$channelId'
       path: '/c/$channelId'
@@ -362,6 +401,7 @@ declare module '@tanstack/react-router' {
 interface AppSSpaceIdRouteChildren {
   AppSSpaceIdBotRoute: typeof AppSSpaceIdBotRoute
   AppSSpaceIdEventsRoute: typeof AppSSpaceIdEventsRoute
+  AppSSpaceIdForumRoute: typeof AppSSpaceIdForumRoute
   AppSSpaceIdMembersRoute: typeof AppSSpaceIdMembersRoute
   AppSSpaceIdSearchRoute: typeof AppSSpaceIdSearchRoute
   AppSSpaceIdSettingsRoute: typeof AppSSpaceIdSettingsRoute
@@ -373,6 +413,7 @@ interface AppSSpaceIdRouteChildren {
 const AppSSpaceIdRouteChildren: AppSSpaceIdRouteChildren = {
   AppSSpaceIdBotRoute: AppSSpaceIdBotRoute,
   AppSSpaceIdEventsRoute: AppSSpaceIdEventsRoute,
+  AppSSpaceIdForumRoute: AppSSpaceIdForumRoute,
   AppSSpaceIdMembersRoute: AppSSpaceIdMembersRoute,
   AppSSpaceIdSearchRoute: AppSSpaceIdSearchRoute,
   AppSSpaceIdSettingsRoute: AppSSpaceIdSettingsRoute,
@@ -407,6 +448,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  ApiPublicBotTokenRoute: ApiPublicBotTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

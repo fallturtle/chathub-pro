@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmAction } from "@/components/confirm-action";
+import { linkify } from "@/lib/linkify";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -167,7 +168,7 @@ function RulesOrLinksView({ channel, canManage, onSaved }: { channel: any; canMa
         ) : (
           <>
             <article className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-              {body || <span className="text-muted-foreground">{canManage ? "Click edit to add content." : "Nothing here yet."}</span>}
+              {body ? linkify(body) : <span className="text-muted-foreground">{canManage ? "Click edit to add content." : "Nothing here yet."}</span>}
             </article>
             {canManage && <Button className="mt-4" variant="outline" onClick={() => setEditing(true)}><Pencil className="h-4 w-4 mr-2" />Edit</Button>}
           </>
