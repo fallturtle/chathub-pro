@@ -10,7 +10,7 @@ import { linkify } from "@/lib/linkify";
 import { ConfirmAction } from "@/components/confirm-action";
 
 type Msg = {
-  id: string; body: string; author_id: string; created_at: string | null;
+  id: string; body: string; author_id: string; created_at: string | null; bot_name?: string | null;
   edited_at: string | null; deleted_at: string | null; pinned: boolean | null;
   channel_id: string | null; dm_thread_id: string | null; parent_id: string | null;
 };

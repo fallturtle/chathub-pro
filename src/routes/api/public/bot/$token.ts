@@ -44,7 +44,8 @@ export const Route = createFileRoute("/api/public/bot/$token")({
         const { error } = await supabaseAdmin.from("messages").insert({
           channel_id: hook.channel_id,
           author_id: hook.created_by,
-          body: prefix + parsed.data.text,
+          body: parsed.data.text,
+          bot_name: parsed.data.username ?? hook.name,
         });
         if (error) return new Response(error.message, { status: 500, headers: CORS });
         await supabaseAdmin.from("bot_webhooks").update({ last_used_at: new Date().toISOString() }).eq("id", hook.id);
