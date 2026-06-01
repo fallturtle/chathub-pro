@@ -91,7 +91,7 @@ function SpaceLayout() {
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/tags", params: { spaceId } })}><Tag className="h-4 w-4 mr-2" />Custom tags</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/forum", params: { spaceId } })}><MessageCircle className="h-4 w-4 mr-2" />Forum</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/bot", params: { spaceId } })}><Webhook className="h-4 w-4 mr-2" />Webhooks</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/bots" as any, params: { spaceId } })}><Bot className="h-4 w-4 mr-2" />Bots</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => (nav as any)({ to: "/app/s/$spaceId/bots", params: { spaceId } })}><Bot className="h-4 w-4 mr-2" />Bots</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigator.clipboard.writeText(joinCode).then(() => toast.success("Copied join code"))} disabled={!joinCode}>Copy join code</DropdownMenuItem>
             {canManage && <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/settings", params: { spaceId } })}><Settings className="h-4 w-4 mr-2" />Settings</DropdownMenuItem>}
