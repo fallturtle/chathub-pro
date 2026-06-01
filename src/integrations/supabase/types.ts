@@ -614,6 +614,7 @@ export type Database = {
         Row: {
           author_id: string
           body: string
+          bot_name: string | null
           channel_id: string | null
           created_at: string | null
           deleted_at: string | null
@@ -627,6 +628,7 @@ export type Database = {
         Insert: {
           author_id: string
           body?: string
+          bot_name?: string | null
           channel_id?: string | null
           created_at?: string | null
           deleted_at?: string | null
@@ -640,6 +642,7 @@ export type Database = {
         Update: {
           author_id?: string
           body?: string
+          bot_name?: string | null
           channel_id?: string | null
           created_at?: string | null
           deleted_at?: string | null
@@ -832,6 +835,62 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_answers: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          question_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          question_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "site_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_questions: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          title: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          title: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
       }
       space_join_codes: {
         Row: {

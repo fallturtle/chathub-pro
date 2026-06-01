@@ -10,7 +10,7 @@ import { linkify } from "@/lib/linkify";
 import { ConfirmAction } from "@/components/confirm-action";
 
 type Msg = {
-  id: string; body: string; author_id: string; created_at: string | null;
+  id: string; body: string; author_id: string; created_at: string | null; bot_name?: string | null;
   edited_at: string | null; deleted_at: string | null; pinned: boolean | null;
   channel_id: string | null; dm_thread_id: string | null; parent_id: string | null;
 };
@@ -195,15 +195,17 @@ export function MessageList({
     }
   };
 
-  // Smart grouping
-  const grouped: { author: string; date: Date; msgs: Msg[] }[] = [];
+  // Smart grouping (bot messages group by bot_name, not author)
+  const groupKey = (m: Msg) => m.bot_name ? `bot:${m.bot_name}` : m.author_id;
+  const grouped: { author: string; key: string; botName?: string | null; date: Date; msgs: Msg[] }[] = [];
   for (const m of messages) {
     const last = grouped[grouped.length - 1];
     const created = m.created_at ?? new Date().toISOString();
-    if (last && last.author === m.author_id && new Date(created).getTime() - last.date.getTime() < 5 * 60 * 1000 && !m.parent_id) {
+    const k = groupKey(m);
+    if (last && last.key === k && new Date(created).getTime() - last.date.getTime() < 5 * 60 * 1000 && !m.parent_id) {
       last.msgs.push(m);
     } else {
-      grouped.push({ author: m.author_id, date: new Date(created), msgs: [m] });
+      grouped.push({ author: m.author_id, key: k, botName: m.bot_name ?? null, date: new Date(created), msgs: [m] });
     }
   }
   let lastDay: string | null = null;
@@ -219,6 +221,8 @@ export function MessageList({
         const showDay = !pinnedOnly && dayStr !== lastDay;
         lastDay = dayStr;
         const prof = profiles[g.author];
+        const isBot = !!g.botName;
+        const displayName = isBot ? g.botName : (prof?.display_name || prof?.username || "…");
         return (
           <div key={gi}>
             {showDay && (
@@ -229,12 +233,13 @@ export function MessageList({
               </div>
             )}
             <div className="flex gap-3 group">
-              <div className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: prof?.avatar_color ?? "#7c3aed" }}>
-                {(prof?.username ?? "?")[0]?.toUpperCase()}
+              <div className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: isBot ? "#475569" : (prof?.avatar_color ?? "#7c3aed") }}>
+                {isBot ? "🤖" : (prof?.username ?? "?")[0]?.toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <span className="font-semibold text-sm">{prof?.display_name || prof?.username || "…"}</span>
+                  <span className="font-semibold text-sm">{displayName}</span>
+                  {isBot && <span className="text-[10px] uppercase font-bold tracking-wide bg-primary/20 text-primary px-1.5 rounded">BOT</span>}
                   <span className="text-xs text-muted-foreground">{format(g.date, "HH:mm")}</span>
                 </div>
                 {g.msgs.map((m) => {

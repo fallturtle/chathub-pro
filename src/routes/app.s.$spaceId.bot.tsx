@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmAction } from "@/components/confirm-action";
-import { Bot, Copy, RotateCw, Trash2, Power } from "lucide-react";
+import { Webhook, Copy, RotateCw, Trash2, Power } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/s/$spaceId/bot")({
@@ -46,7 +46,7 @@ function BotPage() {
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   if (!canManage) {
-    return <div className="p-8 text-muted-foreground"><h1 className="text-xl font-bold mb-2 text-foreground">Bot integration</h1>Managers only.</div>;
+    return <div className="p-8 text-muted-foreground"><h1 className="text-xl font-bold mb-2 text-foreground">Webhooks</h1>Managers only.</div>;
   }
 
   const submit = async () => {
@@ -73,14 +73,14 @@ function BotPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Bot className="h-6 w-6" /> Bot webhooks</h1>
-        <p className="text-sm text-muted-foreground">Each bot gets a unique URL. POST JSON <code className="text-xs bg-muted px-1 rounded">{`{"text":"hello"}`}</code> to post into its channel.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Webhook className="h-6 w-6" /> Webhooks</h1>
+        <p className="text-sm text-muted-foreground">Each webhook posts as a separate bot user using its name. POST JSON <code className="text-xs bg-muted px-1 rounded">{`{"text":"hello","username":"My Bot"}`}</code>.</p>
       </div>
 
       <div className="border rounded-lg p-4 space-y-3 bg-card">
-        <h2 className="font-semibold">Create a new bot</h2>
+        <h2 className="font-semibold">Create a new webhook</h2>
         <div className="grid sm:grid-cols-2 gap-3">
-          <div><Label>Bot name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="GitHub Bot" /></div>
+          <div><Label>Webhook name (shown as sender)</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="GitHub Bot" /></div>
           <div>
             <Label>Posts in channel</Label>
             <Select value={channelId} onValueChange={setChannelId}>
@@ -91,7 +91,7 @@ function BotPage() {
             </Select>
           </div>
         </div>
-        <Button onClick={submit} disabled={busy || !name.trim() || !channelId}>Create bot</Button>
+        <Button onClick={submit} disabled={busy || !name.trim() || !channelId}>Create webhook</Button>
       </div>
 
       <div className="space-y-3">

@@ -22,6 +22,15 @@ function UserSettings() {
   useEffect(() => { if (profile) setForm({ ...profile, theme_pref: getStoredTheme() }); }, [profile]);
   if (!form) return <div className="p-8">Loading…</div>;
 
+  const sendPasswordReset = async () => {
+    if (!user?.email) return toast.error("No email on file");
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Password reset email sent — check your inbox");
+  };
+
   const save = async () => {
     const { error } = await supabase.from("profiles").update({
       display_name: form.display_name,
@@ -68,6 +77,11 @@ function UserSettings() {
           </Select>
         </div>
         <Button onClick={save}>Save</Button>
+        <div className="pt-4 border-t mt-6">
+          <h2 className="font-semibold mb-2">Account security</h2>
+          <p className="text-sm text-muted-foreground mb-2">We'll email you a secure link to change your password.</p>
+          <Button variant="outline" onClick={sendPasswordReset}>Send password reset email</Button>
+        </div>
       </div>
     </div>
   );
