@@ -119,6 +119,8 @@ function ChannelRoute() {
           <MessageList channelId={channelId} blockedWords={blocked} canManage={canManage} onReply={setReplyTo} />
           <MessageComposer
             channelId={channelId}
+            spaceId={spaceId}
+            canManageCustom={canManage}
             disabled={!canPost}
             placeholder={isAnnouncement ? "Announcement…" : `Message #${channel.name}`}
             replyTo={replyTo}

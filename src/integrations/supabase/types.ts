@@ -892,6 +892,33 @@ export type Database = {
         }
         Relationships: []
       }
+      space_emojis: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          space_id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          space_id: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          space_id?: string
+          url?: string
+        }
+        Relationships: []
+      }
       space_join_codes: {
         Row: {
           join_code: string

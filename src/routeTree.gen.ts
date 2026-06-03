@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForumRouteImport } from './routes/forum'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -25,6 +26,7 @@ import { Route as AppSSpaceIdSearchRouteImport } from './routes/app.s.$spaceId.s
 import { Route as AppSSpaceIdMembersRouteImport } from './routes/app.s.$spaceId.members'
 import { Route as AppSSpaceIdForumRouteImport } from './routes/app.s.$spaceId.forum'
 import { Route as AppSSpaceIdEventsRouteImport } from './routes/app.s.$spaceId.events'
+import { Route as AppSSpaceIdBotsRouteImport } from './routes/app.s.$spaceId.bots'
 import { Route as AppSSpaceIdBotRouteImport } from './routes/app.s.$spaceId.bot'
 import { Route as ApiPublicBotTokenRouteImport } from './routes/api/public/bot/$token'
 import { Route as AppSSpaceIdCChannelIdRouteImport } from './routes/app.s.$spaceId.c.$channelId'
@@ -42,6 +44,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForumRoute = ForumRouteImport.update({
+  id: '/forum',
+  path: '/forum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -109,6 +116,11 @@ const AppSSpaceIdEventsRoute = AppSSpaceIdEventsRouteImport.update({
   path: '/events',
   getParentRoute: () => AppSSpaceIdRoute,
 } as any)
+const AppSSpaceIdBotsRoute = AppSSpaceIdBotsRouteImport.update({
+  id: '/bots',
+  path: '/bots',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
 const AppSSpaceIdBotRoute = AppSSpaceIdBotRouteImport.update({
   id: '/bot',
   path: '/bot',
@@ -128,6 +140,7 @@ const AppSSpaceIdCChannelIdRoute = AppSSpaceIdCChannelIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/forum': typeof ForumRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -137,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/app/s/$spaceId': typeof AppSSpaceIdRouteWithChildren
   '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
+  '/app/s/$spaceId/bots': typeof AppSSpaceIdBotsRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
@@ -148,6 +162,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forum': typeof ForumRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -156,6 +171,7 @@ export interface FileRoutesByTo {
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
   '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
+  '/app/s/$spaceId/bots': typeof AppSSpaceIdBotsRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
@@ -169,6 +185,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/forum': typeof ForumRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -178,6 +195,7 @@ export interface FileRoutesById {
   '/app/s/$spaceId': typeof AppSSpaceIdRouteWithChildren
   '/api/public/bot/$token': typeof ApiPublicBotTokenRoute
   '/app/s/$spaceId/bot': typeof AppSSpaceIdBotRoute
+  '/app/s/$spaceId/bots': typeof AppSSpaceIdBotsRoute
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
@@ -192,6 +210,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/forum'
     | '/login'
     | '/reset-password'
     | '/signup'
@@ -201,6 +220,7 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId'
     | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
+    | '/app/s/$spaceId/bots'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
@@ -212,6 +232,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forum'
     | '/login'
     | '/reset-password'
     | '/signup'
@@ -220,6 +241,7 @@ export interface FileRouteTypes {
     | '/app/dm/$threadId'
     | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
+    | '/app/s/$spaceId/bots'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
@@ -232,6 +254,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/forum'
     | '/login'
     | '/reset-password'
     | '/signup'
@@ -241,6 +264,7 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId'
     | '/api/public/bot/$token'
     | '/app/s/$spaceId/bot'
+    | '/app/s/$spaceId/bots'
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
@@ -254,6 +278,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  ForumRoute: typeof ForumRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
@@ -281,6 +306,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forum': {
+      id: '/forum'
+      path: '/forum'
+      fullPath: '/forum'
+      preLoaderRoute: typeof ForumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -374,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSSpaceIdEventsRouteImport
       parentRoute: typeof AppSSpaceIdRoute
     }
+    '/app/s/$spaceId/bots': {
+      id: '/app/s/$spaceId/bots'
+      path: '/bots'
+      fullPath: '/app/s/$spaceId/bots'
+      preLoaderRoute: typeof AppSSpaceIdBotsRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
     '/app/s/$spaceId/bot': {
       id: '/app/s/$spaceId/bot'
       path: '/bot'
@@ -400,6 +439,7 @@ declare module '@tanstack/react-router' {
 
 interface AppSSpaceIdRouteChildren {
   AppSSpaceIdBotRoute: typeof AppSSpaceIdBotRoute
+  AppSSpaceIdBotsRoute: typeof AppSSpaceIdBotsRoute
   AppSSpaceIdEventsRoute: typeof AppSSpaceIdEventsRoute
   AppSSpaceIdForumRoute: typeof AppSSpaceIdForumRoute
   AppSSpaceIdMembersRoute: typeof AppSSpaceIdMembersRoute
@@ -412,6 +452,7 @@ interface AppSSpaceIdRouteChildren {
 
 const AppSSpaceIdRouteChildren: AppSSpaceIdRouteChildren = {
   AppSSpaceIdBotRoute: AppSSpaceIdBotRoute,
+  AppSSpaceIdBotsRoute: AppSSpaceIdBotsRoute,
   AppSSpaceIdEventsRoute: AppSSpaceIdEventsRoute,
   AppSSpaceIdForumRoute: AppSSpaceIdForumRoute,
   AppSSpaceIdMembersRoute: AppSSpaceIdMembersRoute,
@@ -445,6 +486,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  ForumRoute: ForumRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
