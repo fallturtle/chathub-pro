@@ -141,7 +141,7 @@ export function MessageComposer({
   };
 
   const sendGifUrl = async (url: string) => {
-    if (!user || !/^https?:\/\//.test(url)) return toast.error("Enter a valid image/GIF URL");
+    if (!user || !/^https?:\/\//.test(url)) { toast.error("Enter a valid image/GIF URL"); return; }
     setSending(true);
     try {
       const id = await insertMessage({ body: body.trim() || "" });
