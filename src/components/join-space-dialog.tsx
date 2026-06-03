@@ -93,7 +93,10 @@ export function JoinSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenC
                   {joined ? (
                     <Button size="sm" variant="outline" onClick={() => { onOpenChange(false); nav({ to: "/app/s/$spaceId", params: { spaceId: s.id } }); }}>Open</Button>
                   ) : (
-                    <Button size="sm" variant="secondary" disabled={busy} onClick={() => submitPublic(s.id)}>Join</Button>
+                    <>
+                      <Button size="sm" variant="ghost" onClick={() => { onOpenChange(false); nav({ to: "/app/s/$spaceId/forum", params: { spaceId: s.id } }); }}>Forum</Button>
+                      <Button size="sm" variant="secondary" disabled={busy} onClick={() => submitPublic(s.id)}>Join</Button>
+                    </>
                   )}
                 </div>
               );
