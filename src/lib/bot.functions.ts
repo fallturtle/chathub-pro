@@ -39,8 +39,9 @@ export const createBotWebhook = createServerFn({ method: "POST" })
     const { userId } = context;
     await assertManager(data.spaceId, userId);
     const { data: ch } = await supabaseAdmin
-      .from("channels").select("id, space_id").eq("id", data.channelId).maybeSingle();
+      .from("channels").select("id, space_id, type").eq("id", data.channelId).maybeSingle();
     if (!ch || ch.space_id !== data.spaceId) throw new Error("Channel not in space");
+    if ((ch as any).type === "locked") throw new Error("Cannot create webhook for locked channels");
     const { data: hook, error } = await supabaseAdmin
       .from("bot_webhooks")
       .insert({

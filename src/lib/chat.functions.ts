@@ -179,18 +179,28 @@ export const loginWithIdentifier = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data }) => {
+    // Constant ~500ms delay regardless of outcome to mitigate brute-force / enumeration
+    const startedAt = Date.now();
+    const finish = async <T,>(fn: () => Promise<T>): Promise<T> => {
+      try { return await fn(); } finally {
+        const elapsed = Date.now() - startedAt;
+        if (elapsed < 500) await new Promise((r) => setTimeout(r, 500 - elapsed));
+      }
+    };
+    const GENERIC = "Invalid email/username or password";
+    return finish(async () => {
     let email = data.identifier.trim();
     if (!email.includes("@")) {
       const u = email.toLowerCase().replace(/[^a-z0-9_]/g, "");
-      if (u.length < 2) throw new Error("Invalid login");
+      if (u.length < 2) throw new Error(GENERIC);
       const { data: prof } = await supabaseAdmin
         .from("profiles")
         .select("id")
         .ilike("username", u)
         .maybeSingle();
-      if (!prof) throw new Error("Invalid login");
+      if (!prof) throw new Error(GENERIC);
       const { data: userRes, error: uerr } = await supabaseAdmin.auth.admin.getUserById(prof.id);
-      if (uerr || !userRes?.user?.email) throw new Error("Invalid login");
+      if (uerr || !userRes?.user?.email) throw new Error(GENERIC);
       email = userRes.user.email;
     }
     const SUPABASE_URL = process.env.SUPABASE_URL!;
@@ -200,9 +210,10 @@ export const loginWithIdentifier = createServerFn({ method: "POST" })
       auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
     });
     const { data: signIn, error } = await tmp.auth.signInWithPassword({ email, password: data.password });
-    if (error || !signIn.session) throw new Error("Invalid login");
+    if (error || !signIn.session) throw new Error(GENERIC);
     return {
       access_token: signIn.session.access_token,
       refresh_token: signIn.session.refresh_token,
     };
+    });
   });

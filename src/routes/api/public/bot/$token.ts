@@ -47,7 +47,10 @@ export const Route = createFileRoute("/api/public/bot/$token")({
           body: parsed.data.text,
           bot_name: parsed.data.username ?? hook.name,
         });
-        if (error) return new Response(error.message, { status: 500, headers: CORS });
+        if (error) {
+          console.error("[bot-webhook] insert error:", error.message);
+          return new Response("Internal error", { status: 500, headers: CORS });
+        }
         await supabaseAdmin.from("bot_webhooks").update({ last_used_at: new Date().toISOString() }).eq("id", hook.id);
         return new Response(JSON.stringify({ ok: true }), {
           status: 200, headers: { ...CORS, "Content-Type": "application/json" },
