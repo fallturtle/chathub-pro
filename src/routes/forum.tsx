@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { MessageCircle, ArrowLeft } from "lucide-react";
 
-export const Route = createFileRoute("/forum" as any)({
+export const Route = createFileRoute("/forum")({
   head: () => ({
     meta: [
       { title: "Atrium Forum — Community Q&A" },

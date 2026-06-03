@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Bot } from "lucide-react";
 
-export const Route = createFileRoute("/app/s/$spaceId/bots" as any)({
+export const Route = createFileRoute("/app/s/$spaceId/bots")({
   component: BotsPage,
 });
 
