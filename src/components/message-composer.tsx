@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Send, Smile, Paperclip, BarChart3, X, Reply, Plus } from "lucide-react";
+import { Send, Smile, Paperclip, BarChart3, X, Reply, Plus, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { EmojiPicker } from "./emoji-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -27,9 +27,11 @@ const SLASH_COMMANDS: SlashCmd[] = [
 
 export function MessageComposer({
   channelId, dmThreadId, disabled, placeholder = "Message…", replyTo, onClearReply,
+  spaceId, canManageCustom = false,
 }: {
   channelId?: string; dmThreadId?: string; disabled?: boolean; placeholder?: string;
   replyTo?: ReplyTarget; onClearReply?: () => void;
+  spaceId?: string; canManageCustom?: boolean;
 }) {
   const { user } = useAuth();
   const [body, setBody] = useState("");
@@ -37,6 +39,7 @@ export function MessageComposer({
   const [pollOpen, setPollOpen] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [plusOpen, setPlusOpen] = useState(false);
+  const [gifOpen, setGifOpen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -137,6 +140,19 @@ export function MessageComposer({
     }
   };
 
+  const sendGifUrl = async (url: string) => {
+    if (!user || !/^https?:\/\//.test(url)) return toast.error("Enter a valid image/GIF URL");
+    setSending(true);
+    try {
+      const id = await insertMessage({ body: body.trim() || "" });
+      if (!id) return;
+      await supabase.from("attachments").insert({
+        message_id: id, url, mime: "image/gif", name: "gif", size: null, kind: "image",
+      });
+      setBody(""); onClearReply?.(); setGifOpen(false);
+    } finally { setSending(false); }
+  };
+
   if (disabled) {
     return <div className="border-t p-4 text-center text-sm text-muted-foreground bg-muted/30">You don't have permission to post here.</div>;
   }
@@ -173,6 +189,7 @@ export function MessageComposer({
             </PopoverTrigger>
             <PopoverContent side="top" align="start" className="w-44 p-1">
               <button onClick={() => { setPlusOpen(false); fileRef.current?.click(); }} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded text-sm"><Paperclip className="h-4 w-4" /> File or image</button>
+              <button onClick={() => { setPlusOpen(false); setGifOpen(true); }} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded text-sm"><ImageIcon className="h-4 w-4" /> GIF / sticker</button>
               <button onClick={() => { setPlusOpen(false); setPollOpen(true); }} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded text-sm"><BarChart3 className="h-4 w-4" /> Poll</button>
               <button onClick={() => { setPlusOpen(false); setShowEmoji(true); }} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded text-sm"><Smile className="h-4 w-4" /> Emoji</button>
             </PopoverContent>
@@ -180,7 +197,7 @@ export function MessageComposer({
           <input ref={fileRef} type="file" hidden onChange={onPickFile} />
           {showEmoji && (
             <div className="absolute bottom-16 left-3 z-30">
-              <EmojiPicker onClose={() => setShowEmoji(false)} onSelect={(e) => { setBody((b) => b + e); setShowEmoji(false); taRef.current?.focus(); }} />
+              <EmojiPicker spaceId={spaceId} canManageCustom={canManageCustom} onClose={() => setShowEmoji(false)} onSelect={(e) => { setBody((b) => b + e); setShowEmoji(false); taRef.current?.focus(); }} />
             </div>
           )}
           <textarea
@@ -214,7 +231,43 @@ export function MessageComposer({
           setBody(""); onClearReply?.();
         }}
       />
+      <GifDialog open={gifOpen} onOpenChange={setGifOpen} onSubmit={sendGifUrl} />
     </div>
+  );
+}
+
+function GifDialog({ open, onOpenChange, onSubmit }: { open: boolean; onOpenChange: (v: boolean) => void; onSubmit: (url: string) => Promise<void> }) {
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const STICKERS = [
+    "https://media.tenor.com/x8v1oNUOmg4AAAAi/thumbs-up.gif",
+    "https://media.tenor.com/9pyhmDpsZdoAAAAi/fire.gif",
+    "https://media.tenor.com/MA8b3HOk2EQAAAAi/party-parrot.gif",
+    "https://media.tenor.com/cD-NHHsM8DwAAAAi/clap.gif",
+    "https://media.tenor.com/c1y3IpZWMAQAAAAi/heart-blob.gif",
+    "https://media.tenor.com/IbuC8mxPa0YAAAAi/cat-cute.gif",
+  ];
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Send a GIF or sticker</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
+            {STICKERS.map((s) => (
+              <button key={s} onClick={async () => { setBusy(true); await onSubmit(s); setBusy(false); }} disabled={busy} className="border rounded-lg overflow-hidden hover:ring-2 hover:ring-primary aspect-square bg-muted">
+                <img src={s} alt="sticker" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 items-center">
+            <Label className="text-xs shrink-0">Or paste URL:</Label>
+            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…/file.gif" />
+            <Button size="sm" disabled={busy || !url.trim()} onClick={async () => { setBusy(true); await onSubmit(url.trim()); setBusy(false); setUrl(""); }}>Send</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Paste any direct image or GIF URL from Tenor, Giphy, or anywhere else.</p>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
