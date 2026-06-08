@@ -15,6 +15,8 @@ import { ConfirmAction } from "@/components/confirm-action";
 import { linkify } from "@/lib/linkify";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
+import { ThreadsPanel } from "@/components/threads-panel";
+import { MessageSquare } from "lucide-react";
 
 export const Route = createFileRoute("/app/s/$spaceId/c/$channelId")({
   component: ChannelRoute,
@@ -34,6 +36,8 @@ function ChannelRoute() {
   const [blocked, setBlocked] = useState<string[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [threadsOpen, setThreadsOpen] = useState(false);
+  const [threadParent, setThreadParent] = useState<any | null>(null);
   const [replyTo, setReplyTo] = useState<ReplyTarget>(null);
 
   const reload = async () => {
@@ -100,6 +104,7 @@ function ChannelRoute() {
           </>
         )}
         <Button size="icon" variant="ghost" onClick={() => setPinnedOpen(true)} title="Pinned"><Pin className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" onClick={() => setThreadsOpen(true)} title="Threads"><MessageSquare className="h-4 w-4" /></Button>
       </header>
 
       {isLocked ? (
@@ -116,7 +121,15 @@ function ChannelRoute() {
         <RulesOrLinksView channel={channel} canManage={canManage} onSaved={reload} />
       ) : (
         <>
-          <MessageList channelId={channelId} blockedWords={blocked} canManage={canManage} onReply={setReplyTo} />
+          <MessageList
+            channelId={channelId}
+            spaceId={spaceId}
+            parentId={null}
+            blockedWords={blocked}
+            canManage={canManage}
+            onReply={setReplyTo}
+            onOpenThread={(m) => { setThreadParent(m); setThreadsOpen(true); }}
+          />
           <MessageComposer
             channelId={channelId}
             spaceId={spaceId}
@@ -130,11 +143,19 @@ function ChannelRoute() {
       )}
 
       <EditChannelDialog open={editOpen} onOpenChange={setEditOpen} channel={channel} onSaved={reload} />
+      <ThreadsPanel
+        open={threadsOpen}
+        onOpenChange={(v) => { setThreadsOpen(v); if (!v) setThreadParent(null); }}
+        channelId={channelId}
+        spaceId={spaceId}
+        blockedWords={blocked}
+        canManage={canManage}
+      />
       <Dialog open={pinnedOpen} onOpenChange={setPinnedOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader><DialogTitle><Pin className="inline h-4 w-4 mr-2" />Pinned messages</DialogTitle></DialogHeader>
           <div className="flex-1 overflow-hidden flex flex-col min-h-[300px]">
-            <MessageList channelId={channelId} blockedWords={blocked} canManage={canManage} pinnedOnly />
+            <MessageList channelId={channelId} spaceId={spaceId} blockedWords={blocked} canManage={canManage} pinnedOnly />
           </div>
         </DialogContent>
       </Dialog>
