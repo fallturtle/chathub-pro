@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EMOJI_SHORTCODES } from "@/lib/emoji-shortcodes";
 
 export type ReplyTarget = { id: string; body: string; authorName: string } | null;
 
@@ -40,6 +41,7 @@ export function MessageComposer({
   const [showEmoji, setShowEmoji] = useState(false);
   const [plusOpen, setPlusOpen] = useState(false);
   const [gifOpen, setGifOpen] = useState(false);
+  const [customEmojis, setCustomEmojis] = useState<{ name: string; url: string }[]>([]);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +51,41 @@ export function MessageComposer({
       taRef.current.style.height = Math.min(taRef.current.scrollHeight, 200) + "px";
     }
   }, [body]);
+
+  useEffect(() => {
+    if (!spaceId) { setCustomEmojis([]); return; }
+    supabase.from("space_emojis").select("name,url").eq("space_id", spaceId).then(({ data }) => {
+      setCustomEmojis((data ?? []) as any);
+    });
+  }, [spaceId]);
+
+  // :emoji autocomplete based on caret position
+  const caret = taRef.current?.selectionStart ?? body.length;
+  const upToCaret = body.slice(0, caret);
+  const emojiMatch = upToCaret.match(/(^|\s):([a-z0-9_+-]{1,32})$/i);
+  const emojiQuery = emojiMatch?.[2]?.toLowerCase() ?? null;
+  const emojiSuggestions = emojiQuery !== null ? (() => {
+    const out: { key: string; label: string; replacement: string; img?: string }[] = [];
+    for (const c of customEmojis) {
+      if (c.name.toLowerCase().startsWith(emojiQuery)) out.push({ key: `c:${c.name}`, label: `:${c.name}:`, replacement: `:${c.name}: `, img: c.url });
+    }
+    for (const [name, unicode] of Object.entries(EMOJI_SHORTCODES)) {
+      if (name.startsWith(emojiQuery)) out.push({ key: `u:${name}`, label: `${unicode} :${name}:`, replacement: `${unicode} ` });
+    }
+    return out.slice(0, 8);
+  })() : [];
+
+  const applyEmojiSuggestion = (s: { replacement: string }) => {
+    if (!emojiMatch || emojiQuery === null) return;
+    const startOfToken = caret - emojiQuery.length - 1; // include ':'
+    const newBody = body.slice(0, startOfToken) + s.replacement + body.slice(caret);
+    setBody(newBody);
+    requestAnimationFrame(() => {
+      const pos = startOfToken + s.replacement.length;
+      taRef.current?.focus();
+      taRef.current?.setSelectionRange(pos, pos);
+    });
+  };
 
   // Slash command suggestions
   const slashMatch = body.match(/^\/([a-z]*)$/i);
@@ -181,6 +218,21 @@ export function MessageComposer({
           ))}
         </div>
       )}
+      {emojiSuggestions.length > 0 && suggestions.length === 0 && (
+        <div className="absolute bottom-full left-3 right-3 mb-1 z-30 bg-popover border rounded-md shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+          <div className="px-3 py-1 text-[10px] uppercase tracking-wide text-muted-foreground border-b">Emoji — Tab to insert</div>
+          {emojiSuggestions.map((s) => (
+            <button
+              key={s.key}
+              onMouseDown={(e) => { e.preventDefault(); applyEmojiSuggestion(s); }}
+              className="w-full text-left px-3 py-1.5 hover:bg-accent text-sm flex items-center gap-2"
+            >
+              {s.img ? <img src={s.img} alt="" className="h-5 w-5 object-contain" /> : null}
+              <span>{s.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="p-3">
         <div className="flex gap-2 items-end">
           <Popover open={plusOpen} onOpenChange={setPlusOpen}>
@@ -205,6 +257,11 @@ export function MessageComposer({
             value={body}
             onChange={(e) => setBody(e.target.value)}
             onKeyDown={(e) => {
+              if (e.key === "Tab" && emojiSuggestions.length > 0) {
+                e.preventDefault();
+                applyEmojiSuggestion(emojiSuggestions[0]);
+                return;
+              }
               if (e.key === "Tab" && suggestions.length > 0) {
                 e.preventDefault();
                 setBody(`/${suggestions[0].name} `);
