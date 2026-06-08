@@ -111,7 +111,7 @@ function BotsPage() {
                   <Button size="icon" variant="ghost" title={r.enabled ? "Disable" : "Enable"} onClick={() => updateRule(r.id, { enabled: !r.enabled })} className={r.enabled ? "" : "opacity-40"}>
                     <Power className="h-4 w-4" />
                   </Button>
-                  <ConfirmAction title="Delete this rule?" onConfirm={() => deleteRule(r.id)}>
+                  <ConfirmAction title="Delete this rule?" description="The bot will stop replying to this trigger." onConfirm={() => deleteRule(r.id)}>
                     <Button size="icon" variant="ghost" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                   </ConfirmAction>
                 </div>
