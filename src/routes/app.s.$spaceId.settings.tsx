@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
+import { SUGGESTED_BLOCKED_WORDS } from "@/lib/blocked-words";
+import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/app/s/$spaceId/settings")({
   component: SpaceSettings,
@@ -25,6 +27,8 @@ function SpaceSettings() {
   const [joinCode, setJoinCode] = useState<string>("");
   const [blocked, setBlocked] = useState<any[]>([]);
   const [newWord, setNewWord] = useState("");
+  const [filterQ, setFilterQ] = useState("");
+  const [showSuggested, setShowSuggested] = useState(false);
   const [rate, setRate] = useState<any>(null);
 
   const reload = async () => {
@@ -59,7 +63,6 @@ function SpaceSettings() {
     await supabase.from("filters_blocked").delete().eq("id", id);
     reload();
   };
-  const SUGGESTED = ["damn","hell","crap","stupid","idiot","shut up","hate","kill","loser","dumb"];
 
   const saveRate = async () => {
     const { error } = await supabase.from("filters_rate").upsert({ ...rate, space_id: spaceId });
@@ -109,13 +112,44 @@ function SpaceSettings() {
             <div className="flex gap-2 mb-2">
               <Input value={newWord} onChange={(e) => setNewWord(e.target.value)} placeholder="word" onKeyDown={(e) => e.key === "Enter" && addBlocked([newWord])} />
               <Button onClick={() => addBlocked([newWord])}>Add</Button>
-              <Button variant="outline" onClick={() => addBlocked(SUGGESTED.filter(w => !blocked.some(b => b.word === w)))}>Add suggested</Button>
+              <Button variant="outline" onClick={() => setShowSuggested((v) => !v)}>{showSuggested ? "Hide" : "Browse"} suggested ({SUGGESTED_BLOCKED_WORDS.length})</Button>
             </div>
+            <div className="relative mb-2">
+              <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input value={filterQ} onChange={(e) => setFilterQ(e.target.value)} placeholder="Search your blocklist…" className="pl-8 h-8 text-sm" />
+            </div>
+            <p className="text-xs text-muted-foreground mb-1">{blocked.length} word{blocked.length === 1 ? "" : "s"} blocked · click any to remove</p>
             <div className="flex flex-wrap gap-2">
-              {blocked.map((b) => (
+              {blocked
+                .filter((b) => !filterQ || b.word.toLowerCase().includes(filterQ.toLowerCase()))
+                .map((b) => (
                 <button key={b.id} onClick={() => removeBlocked(b.id)} className="text-xs px-2 py-1 rounded bg-muted hover:bg-destructive hover:text-destructive-foreground">{b.word} ×</button>
               ))}
             </div>
+            {showSuggested && (
+              <div className="mt-4 border rounded-lg p-3 bg-muted/30">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-sm">Suggested words</h3>
+                  <Button size="sm" variant="outline" onClick={() => addBlocked(SUGGESTED_BLOCKED_WORDS.filter((w) => !blocked.some((b) => b.word === w)))}>Add all missing</Button>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">Click to add. Already-blocked words are highlighted.</p>
+                <div className="max-h-72 overflow-y-auto flex flex-wrap gap-1.5">
+                  {SUGGESTED_BLOCKED_WORDS
+                    .filter((w) => !filterQ || w.includes(filterQ.toLowerCase()))
+                    .map((w) => {
+                      const have = blocked.some((b) => b.word === w);
+                      return (
+                        <button
+                          key={w}
+                          disabled={have}
+                          onClick={() => addBlocked([w])}
+                          className={`text-xs px-2 py-1 rounded border ${have ? "bg-primary/20 border-primary text-muted-foreground cursor-default" : "bg-background hover:bg-accent"}`}
+                        >{w}{have ? " ✓" : " +"}</button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </section>
           {rate && (
             <section className="space-y-2">

@@ -1,34 +1,34 @@
 import { Fragment, type ReactNode } from "react";
+import { EMOJI_SHORTCODES } from "./emoji-shortcodes";
 
 const URL_RE = /\b((?:https?:\/\/|www\.)[^\s<>"')]+[^\s<>"'.,;:!?)\]])/gi;
 const EMOJI_RE = /:([a-z0-9_+-]{2,32}):/gi;
 
 export function linkify(text: string, customEmojis?: Record<string, string>): ReactNode[] {
-  // First, split on :name: tokens that map to custom emoji URLs
+  // Replace :name: tokens: prefer custom-emoji image, fall back to unicode shortcode
   const parts: ReactNode[] = [];
   let idx = 0;
   let cursor = 0;
-  if (customEmojis && Object.keys(customEmojis).length) {
-    text.replace(EMOJI_RE, (match, name: string, offset: number) => {
-      const url = customEmojis[name.toLowerCase()];
-      if (!url) return match;
-      if (offset > cursor) parts.push(...linkifyOnly(text.slice(cursor, offset), `s${idx++}`));
+  const hasCustom = customEmojis && Object.keys(customEmojis).length > 0;
+  text.replace(EMOJI_RE, (match, name: string, offset: number) => {
+    const lower = name.toLowerCase();
+    const url = hasCustom ? customEmojis![lower] : undefined;
+    const unicode = url ? undefined : EMOJI_SHORTCODES[lower];
+    if (!url && !unicode) return match;
+    if (offset > cursor) parts.push(...linkifyOnly(text.slice(cursor, offset), `s${idx++}`));
+    if (url) {
       parts.push(
-        <img
-          key={`e${idx++}`}
-          src={url}
-          alt={`:${name}:`}
-          title={`:${name}:`}
-          className="inline-block h-5 w-5 align-text-bottom mx-0.5"
-        />,
+        <img key={`e${idx++}`} src={url} alt={`:${name}:`} title={`:${name}:`}
+          className="inline-block h-5 w-5 align-text-bottom mx-0.5" />,
       );
-      cursor = offset + match.length;
-      return match;
-    });
-    if (cursor < text.length) parts.push(...linkifyOnly(text.slice(cursor), `s${idx++}`));
-    return parts;
-  }
-  return linkifyOnly(text, "s");
+    } else {
+      parts.push(<Fragment key={`u${idx++}`}>{unicode}</Fragment>);
+    }
+    cursor = offset + match.length;
+    return match;
+  });
+  if (cursor < text.length) parts.push(...linkifyOnly(text.slice(cursor), `s${idx++}`));
+  return parts.length ? parts : linkifyOnly(text, "s");
 }
 
 function linkifyOnly(text: string, prefix: string): ReactNode[] {

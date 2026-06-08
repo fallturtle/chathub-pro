@@ -96,6 +96,44 @@ export type Database = {
           },
         ]
       }
+      bot_rules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          match_type: string
+          response: string
+          trigger: string
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          match_type?: string
+          response: string
+          trigger: string
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          match_type?: string
+          response?: string
+          trigger?: string
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_rules_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "bot_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bot_webhook_tokens: {
         Row: {
           created_at: string
