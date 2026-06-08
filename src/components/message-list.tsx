@@ -257,8 +257,10 @@ export function MessageList({
               </div>
             )}
             <div className="flex gap-3 group">
-              <div className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: isBot ? "#475569" : (prof?.avatar_color ?? "#7c3aed") }}>
-                {isBot ? "🤖" : (prof?.username ?? "?")[0]?.toUpperCase()}
+              <div className="h-9 w-9 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: isBot ? "#475569" : (prof?.avatar_color ?? "#7c3aed") }}>
+                {isBot ? "🤖" : prof?.avatar_url ? (
+                  <img src={prof.avatar_url} alt={prof?.username ?? ""} className="h-full w-full object-cover" />
+                ) : (prof?.username ?? "?")[0]?.toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
