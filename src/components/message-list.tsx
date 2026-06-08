@@ -23,10 +23,11 @@ const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🎉", "🔥"];
 
 export function MessageList({
   channelId, dmThreadId, blockedWords = [], canManage = false,
-  onReply, pinnedOnly = false,
+  onReply, pinnedOnly = false, spaceId, parentId, onOpenThread,
 }: {
   channelId?: string; dmThreadId?: string; blockedWords?: string[]; canManage?: boolean;
   onReply?: (t: ReplyTarget) => void; pinnedOnly?: boolean;
+  spaceId?: string; parentId?: string | null; onOpenThread?: (m: Msg) => void;
 }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -36,6 +37,8 @@ export function MessageList({
   const [polls, setPolls] = useState<Record<string, Poll>>({});
   const [pollOpts, setPollOpts] = useState<Record<string, PollOpt[]>>({});
   const [pollVotes, setPollVotes] = useState<Record<string, PollVote[]>>({});
+  const [customEmojis, setCustomEmojis] = useState<Record<string, string>>({});
+  const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,6 +52,15 @@ export function MessageList({
     }
     return out;
   };
+
+  useEffect(() => {
+    if (!spaceId) return;
+    supabase.from("space_emojis").select("name,url").eq("space_id", spaceId).then(({ data }) => {
+      const m: Record<string, string> = {};
+      for (const r of data ?? []) m[(r as any).name.toLowerCase()] = (r as any).url;
+      setCustomEmojis(m);
+    });
+  }, [spaceId]);
 
   const loadProfiles = async (ids: string[]) => {
     const missing = Array.from(new Set(ids)).filter((i) => i && !profiles[i]);
@@ -95,11 +107,23 @@ export function MessageList({
     if (channelId) q = q.eq("channel_id", channelId);
     if (dmThreadId) q = q.eq("dm_thread_id", dmThreadId);
     if (pinnedOnly) q = q.eq("pinned", true);
+    if (parentId !== undefined) {
+      if (parentId === null) q = q.is("parent_id", null);
+      else q = q.eq("parent_id", parentId);
+    }
     q.then(async ({ data }) => {
       const list = (data ?? []) as Msg[];
       setMessages(list);
       await loadProfiles(list.map((m) => m.author_id));
       await loadExtras(list.map((m) => m.id), true);
+      // load reply counts for top-level messages
+      const topIds = list.filter((m) => !m.parent_id).map((m) => m.id);
+      if (topIds.length) {
+        const { data: kids } = await supabase.from("messages").select("parent_id").in("parent_id", topIds);
+        const counts: Record<string, number> = {};
+        for (const k of kids ?? []) counts[(k as any).parent_id] = (counts[(k as any).parent_id] ?? 0) + 1;
+        setReplyCounts(counts);
+      }
       // also load parent authors for replies
       const parentIds = list.map((m) => m.parent_id).filter(Boolean) as string[];
       if (parentIds.length) {
@@ -251,6 +275,7 @@ export function MessageList({
                   const votes = poll ? (pollVotes[poll.id] ?? []) : [];
                   const myVotes = poll && user ? votes.filter((v) => v.user_id === user.id).map((v) => v.option_id) : [];
                   const totalVoters = new Set(votes.map((v) => v.user_id)).size;
+                  const replyCount = replyCounts[m.id] ?? 0;
                   return (
                     <div key={m.id} className="group/msg relative -mx-2 px-2 py-0.5 hover:bg-accent/50 rounded">
                       {parent && (
@@ -270,7 +295,7 @@ export function MessageList({
                         </div>
                       ) : (
                         <div className="text-sm break-words whitespace-pre-wrap">
-                          {linkify(filterText(m.body))}
+                          {linkify(filterText(m.body), customEmojis)}
                           {m.edited_at && <span className="text-[10px] text-muted-foreground ml-1">(edited)</span>}
                           {m.pinned && <Pin className="inline h-3 w-3 ml-1 text-primary" />}
                         </div>
@@ -304,6 +329,11 @@ export function MessageList({
                           })}
                           <div className="text-[10px] text-muted-foreground">{totalVoters} voter{totalVoters === 1 ? "" : "s"} · {poll.kind === "multi" ? "multi-choice" : "single choice"}</div>
                         </div>
+                      )}
+                      {replyCount > 0 && onOpenThread && !parentId && (
+                        <button onClick={() => onOpenThread(m)} className="mt-1 text-xs text-primary hover:underline flex items-center gap-1">
+                          <Reply className="h-3 w-3" /> {replyCount} {replyCount === 1 ? "reply" : "replies"} — open thread
+                        </button>
                       )}
                       {(reactions[m.id]?.length ?? 0) > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
