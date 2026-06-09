@@ -96,6 +96,68 @@ export type Database = {
           },
         ]
       }
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bot_channels: {
+        Row: {
+          channel_id: string
+          webhook_id: string
+        }
+        Insert: {
+          channel_id: string
+          webhook_id: string
+        }
+        Update: {
+          channel_id?: string
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_channels_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_channels_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "bot_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bot_rules: {
         Row: {
           created_at: string
@@ -162,6 +224,7 @@ export type Database = {
           id: string
           last_used_at: string | null
           name: string
+          posts_everywhere: boolean
           space_id: string
         }
         Insert: {
@@ -173,6 +236,7 @@ export type Database = {
           id?: string
           last_used_at?: string | null
           name: string
+          posts_everywhere?: boolean
           space_id: string
         }
         Update: {
@@ -184,6 +248,7 @@ export type Database = {
           id?: string
           last_used_at?: string | null
           name?: string
+          posts_everywhere?: boolean
           space_id?: string
         }
         Relationships: []
@@ -263,31 +328,40 @@ export type Database = {
       }
       channels: {
         Row: {
+          archived: boolean
           body: Json | null
+          category: string | null
           created_at: string | null
           id: string
           name: string
           position: number
+          slowmode_seconds: number
           space_id: string
           topic: string | null
           type: Database["public"]["Enums"]["channel_kind"]
         }
         Insert: {
+          archived?: boolean
           body?: Json | null
+          category?: string | null
           created_at?: string | null
           id?: string
           name: string
           position?: number
+          slowmode_seconds?: number
           space_id: string
           topic?: string | null
           type?: Database["public"]["Enums"]["channel_kind"]
         }
         Update: {
+          archived?: boolean
           body?: Json | null
+          category?: string | null
           created_at?: string | null
           id?: string
           name?: string
           position?: number
+          slowmode_seconds?: number
           space_id?: string
           topic?: string | null
           type?: Database["public"]["Enums"]["channel_kind"]
@@ -595,6 +669,62 @@ export type Database = {
           },
         ]
       }
+      ip_bans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ip: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ip: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ip?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      join_requests: {
+        Row: {
+          created_at: string
+          id: string
+          requested_by: string
+          requested_user_id: string
+          space_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          requested_by: string
+          requested_user_id: string
+          space_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          requested_by?: string
+          requested_user_id?: string
+          space_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "join_requests_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_tags: {
         Row: {
           assigned_at: string
@@ -782,6 +912,7 @@ export type Database = {
       }
       polls: {
         Row: {
+          anonymous: boolean
           closes_at: string | null
           id: string
           kind: Database["public"]["Enums"]["poll_kind"]
@@ -789,6 +920,7 @@ export type Database = {
           question: string
         }
         Insert: {
+          anonymous?: boolean
           closes_at?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["poll_kind"]
@@ -796,6 +928,7 @@ export type Database = {
           question: string
         }
         Update: {
+          anonymous?: boolean
           closes_at?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["poll_kind"]
@@ -814,33 +947,42 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accent_color: string | null
           avatar_color: string | null
           avatar_url: string | null
           created_at: string | null
+          density: string | null
           description: string | null
           display_name: string | null
+          font_pref: string | null
           id: string
           status_emoji: string | null
           status_text: string | null
           username: string
         }
         Insert: {
+          accent_color?: string | null
           avatar_color?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          density?: string | null
           description?: string | null
           display_name?: string | null
+          font_pref?: string | null
           id: string
           status_emoji?: string | null
           status_text?: string | null
           username: string
         }
         Update: {
+          accent_color?: string | null
           avatar_color?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          density?: string | null
           description?: string | null
           display_name?: string | null
+          font_pref?: string | null
           id?: string
           status_emoji?: string | null
           status_text?: string | null
@@ -870,6 +1012,102 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string | null
+          reason: string
+          reporter_id: string
+          space_id: string
+          status: string
+          target_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          reason: string
+          reporter_id: string
+          space_id: string
+          status?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          reason?: string
+          reporter_id?: string
+          space_id?: string
+          status?: string
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_messages: {
+        Row: {
+          author_id: string
+          body: string
+          channel_id: string | null
+          created_at: string
+          dm_thread_id: string | null
+          id: string
+          send_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          author_id: string
+          body: string
+          channel_id?: string | null
+          created_at?: string
+          dm_thread_id?: string | null
+          id?: string
+          send_at: string
+          sent_at?: string | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          channel_id?: string | null
+          created_at?: string
+          dm_thread_id?: string | null
+          id?: string
+          send_at?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_dm_thread_id_fkey"
+            columns: ["dm_thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
             referencedColumns: ["id"]
           },
         ]
@@ -929,6 +1167,95 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      site_reports: {
+        Row: {
+          created_at: string
+          details: string
+          escalator_id: string
+          id: string
+          reason: string
+          source_report_id: string | null
+          space_id: string | null
+          status: string
+          target_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details: string
+          escalator_id: string
+          id?: string
+          reason: string
+          source_report_id?: string | null
+          space_id?: string | null
+          status?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: string
+          escalator_id?: string
+          id?: string
+          reason?: string
+          source_report_id?: string | null
+          space_id?: string | null
+          status?: string
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_reports_source_report_id_fkey"
+            columns: ["source_report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_reports_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      space_commands: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          response: string
+          space_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          response: string
+          space_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          response?: string
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_commands_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       space_emojis: {
         Row: {
@@ -1017,6 +1344,7 @@ export type Database = {
       }
       spaces: {
         Row: {
+          automod_preset: string
           created_at: string | null
           description: string | null
           icon_bg: string | null
@@ -1030,6 +1358,7 @@ export type Database = {
           visibility: Database["public"]["Enums"]["space_visibility"]
         }
         Insert: {
+          automod_preset?: string
           created_at?: string | null
           description?: string | null
           icon_bg?: string | null
@@ -1043,6 +1372,7 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["space_visibility"]
         }
         Update: {
+          automod_preset?: string
           created_at?: string | null
           description?: string | null
           icon_bg?: string | null
@@ -1148,6 +1478,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_space_role: {
         Args: {
           _min: Database["public"]["Enums"]["space_role"]
