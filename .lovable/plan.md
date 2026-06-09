@@ -1,139 +1,88 @@
-# Artistry Hub — Chat Platform Plan
+Big update — I'll group the work so you can see what's in scope, what's a "lite" version, and what I'd push to a follow-up. At the end I'll answer your districts/orgs question.
 
-A Discord/Google Chat hybrid built in one pass to minimize credits. Phasing would mean re-loading context across multiple builds (more expensive). One large build is more credit-efficient *if* the plan is tight — that's what this is.
+## Group A — Ship in this update (full)
 
-## Decisions locked in from your answers
+1. **Per-user themes** — extend Settings with accent color, font, density (compact/cozy/roomy). Stored in `profiles` + applied via CSS vars.
+2. **Drafts persist per channel/DM** — `localStorage` keyed by `channel:<id>` / `dm:<id>`, restored on mount.
+3. **Saved messages / bookmarks** — new `bookmarks` table, "Saved" entry in sidebar, bookmark icon on message hover.
+4. **Read receipts + unread badges in DMs only** — `dm_participants.last_read_at` already exists conceptually; add column + update on view, badge in sidebar.
+5. **Channel categories / collapsible groups** — add `channels.category` text column; group + collapse in sidebar (state in localStorage).
+6. **Slowmode per channel** — `channels.slowmode_seconds`, enforced by trigger (per author, per channel). Owners/managers edit in channel settings.
+7. **Auto-mod presets** (Strict/Balanced/Chill/Off) — single setting on space; maps to existing rate-limit + blocked-word seeding.
+8. **Profanity list strictness picker** — clicking "Insert suggested list" opens a dialog with Strict / Balanced / Chill options and inserts a different word set per level.
+9. **Polls v2** — multi-question, anonymous toggle, scheduled close (`polls.closes_at`).
+10. **Profile cards on hover** — HoverCard with avatar, status, tags, "Send DM" button.
+11. **Server-wide (global) search** — new `/app/search` route, queries messages across joined spaces + DMs you're in.
+12. **Export channel history** — server fn returns JSON / Markdown / TXT for a channel. Manager and owner only.
+13. **/report command** — `/report @user reason…` creates a row in `reports` table visible to space owners/managers in a new "Reports" page.
+14. **Site-admin escalation + dashboard** — owners/managers click "Escalate to site admins" → `site_reports`. New `/app/admin` route gated by `has_role('admin')`, lists reports + spaces + users. When they click to escalate it they have to write a like mini report type of thing.
+15. **Scrollable sidebar** — wrap the spaces list in scroll area so it doesn't push off-screen.
+16. **Invite by username** — Members page: "Add by @username" input → inserts into `space_members`. Sends a join request to that user.
+17. **DM-style status banner** — show recipient's `status_text` at top of DM until dismissed (×). Dismissal stored in localStorage per thread.
+18. **Multi-channel bots** — new `bot_channels` table (webhook_id, channel_id). UI lets managers pick multiple channels. Trigger updated.
+19. **Custom /commands per space** — `space_commands` table (name, response template). Composer recognizes and posts via bot identity.
+20. **Tag badges on messages** — fetch `member_tags` with messages and show small colored chips next to display name.
 
-- **Auth**: email + password + username. Email is for password recovery only; the app shows usernames everywhere. Login is by username **or** email + password.
-- **Theme**: defaults to system preference, falls back to dark. Each user can override in settings (light / dark / system).
-- **Bot**: embedded Google Chat–style. Your uploaded HTML controller renders inside a "Bot" sidebar panel per space (iframe + `postMessage` bridge so it can read the current space/user). It keeps talking to *your* Apps Script Web App URL — no backend rewrite needed. Owners paste the Apps Script URL + auth token in space settings. (We can talk about deeper native integration later if you want.)
-- **Sequencing**: everything in one build.
+## Group B — Lite version this update (full version later)
 
-## Stack
+21. **Voice/video huddles** — WebRTC is a multi-day build (signaling, TURN, UI). I'll add a stub: per-channel "Start huddle" button that opens a Jitsi Meet iframe in a sheet using a deterministic room name. Zero-cost, works today; we can swap to native WebRTC later. (this can be skipped for now and we can dedicate an entire pass through to this later)
+22. **Scheduled messages** — `scheduled_messages` table + composer "Schedule…" picker. Posting is done by a pg_cron job every minute that calls a public route to flush due rows. (Free.)
+23. **Bot variables** — supports `{user}`, `{channel}`, `{date}`, `{time}` token substitution in rule responses. External URL "call" action deferred.
+24. **Inline message translation** — "Translate" item in message menu → Lovable AI Gateway (Gemini Flash Lite, cheap). I'll cache per (message_id, target_lang). Free monthly allowance covers casual use; warn user if rate-limited. (skip if it costs stuff, if there is even a chance it will break bc of limits then skip this for now and we can come up with something else to do something similar later)
+25. **AI "summarize since I was last here"** — channel header button. Calls Lovable AI with last 100 messages since your `last_read_at`. Same cost note as above; no user-side key required. (skip if it costs stuff, if there is even a chance it will break bc of limits then skip this for now and we can come up with something else to do something similar later)
+26. **Two-factor auth** — Settings page adds "Enable 2FA" using Supabase Auth's TOTP enroll flow (`supabase.auth.mfa.enroll`). Optional, not required. (has several different options for setting up 2FA)
 
-- TanStack Start (already set up)
-- Lovable Cloud (Postgres + Auth + Storage + Realtime)
-- Tailwind + shadcn for UI, Framer Motion for subtle motion
-- Realtime via Cloud's Postgres changes channels (no polling)
+## Group C — Recommend deferring (out of scope this turn)
 
-## Data model (Cloud tables)
+- Full native WebRTC huddles with screen share (needs TURN server).
+- External-API bot actions (security review needed).
+- Full app-admin dashboard analytics (start with reports + ban/unban only). (banning/unbanning should be via IP if possible so bad people cant get arround it with another account.)
 
-```text
-profiles            id, username (unique), display_name, description, avatar_url,
-                    avatar_color, status_text, status_emoji, theme_pref, prefs jsonb
-user_roles          user_id, role (global: 'user'|'admin')   -- separate table, never on profiles
-spaces              id, name, slug, description, icon_url, icon_emoji, icon_bg,
-                    visibility ('public'|'private'), join_code, mention_all_policy
-                    ('owners'|'managers'|'everyone'), owner_id, created_at
-space_members       space_id, user_id, role ('owner'|'manager'|'member'),
-                    muted_until, banned, joined_at  (PK: space_id+user_id)
-channels            id, space_id, name, type ('general'|'announcement'|'rules'
-                    |'links'|'locked'), password_hash, position, topic
-channel_access      channel_id, user_id   -- unlocked locked-channels per user
-messages            id, channel_id (nullable), dm_thread_id (nullable), parent_id
-                    (thread root), author_id, body, body_rich jsonb, edited_at,
-                    deleted_at, created_at
-attachments         id, message_id, url, mime, name, size
-reactions           message_id, user_id, emoji   (PK all three)
-polls               id, message_id, question, kind ('single'|'multi'|'ranked'),
-                    closes_at
-poll_options        id, poll_id, label
-poll_votes          poll_id, option_id, user_id, rank
-dm_threads          id, created_at
-dm_participants     thread_id, user_id
-mentions            message_id, target ('all'|'user'), user_id
-events              id, space_id, title, description, starts_at, ends_at,
-                    created_by, location
-event_rsvps         event_id, user_id, status
-filters_blocked     space_id, word
-filters_rate        space_id, max_msgs, window_seconds, mute_seconds
-strikes             space_id, user_id, count, last_at
-custom_tags         space_id, user_id, label, color
-bot_configs         space_id, apps_script_url, auth_token, html_url (optional)
-audit_log           id, space_id, actor_id, action, target, at, meta jsonb
-```
+## Multi-channel bot — your options
 
-RLS on every table. Role checks via `has_space_role(space_id, user_id, min_role)` SECURITY DEFINER function — no recursion.
+For "what channel(s) is this bot in":
 
-## Routes
+- **A. Many-to-many** (chosen): `bot_channels(webhook_id, channel_id)`. Each webhook can post to N channels; rules fire in any of them. Most flexible.
+- **B. Wildcard**: a `posts_everywhere` flag on the webhook → bot replies in any channel in the space. Simpler but noisier.
+- **C. Per-channel webhook** (today): one webhook = one channel. Simplest, what you have now.
 
-```text
-/                            landing (public)
-/login, /signup, /reset-password
-/_authenticated/
-  app                        shell with sidebar (spaces) + main pane
-  app/dm/$threadId
-  app/s/$spaceId             redirects to first channel
-  app/s/$spaceId/c/$channelId
-  app/s/$spaceId/events
-  app/s/$spaceId/members
-  app/s/$spaceId/settings
-  app/s/$spaceId/bot
-  app/browse                 public spaces directory + "join by code"
-  app/settings               user profile/prefs/password/theme
-```
+I'll implement **A** and keep B as a checkbox ("Post in all channels").
 
-## Feature mapping
+(i want it to be a combo of a and b, it reads in any channels and responds in the channel where it is fired in or whatever)
 
-- **Realtime** — Cloud channel subscription per open channel/DM; new messages stream in. Reactions, edits, deletes, presence broadcast through the same channel.
-- **Channel types** — `general` (everyone posts), `announcement` (only owners/managers post; everyone reads), `rules`/`links` (managed pages, owner/manager edits a pinned doc-style block), `locked` (password modal → record in `channel_access`, password is bcrypt-hashed server-side via a server function).
-- **Roles & moderation** — promote/demote/mute/ban/kick via server functions that check `has_space_role`. Add member by username (lookup → insert into `space_members`). Owner-only: delete space, change `mention_all_policy`, transfer ownership.
-- **@all / @user** — parsed on send, written into `mentions`. `@all` rejected by server fn if caller's role doesn't satisfy the space's policy.
-- **Chat filters** — blocked words replaced with `####` at render time *and* stored sanitized. Suggested-words button seeds the list with a curated profanity set. Rate limiter: server fn checks recent message count per user/channel; on trip → set `muted_until` and notify. Strikes table tracks repeat offenders.
-- **Polls** — single-choice, multi-choice, and ranked (drag to reorder). Live vote counts via realtime.
-- **Threads/replies** — `parent_id` self-reference; thread panel slides in on right.
-- **Files/images/GIFs/stickers** — Cloud Storage bucket `attachments` (public read, authed write, RLS by space membership). GIF picker via Tenor (free public API, key as a public secret). Stickers = curated Cloud-hosted set + per-space custom stickers.
-- **Emoji + reactions** — emoji-mart picker.
-- **Rich text** — `{bold text}`, `{italic text}`, `{code text}`, `{red:colored text}` parsed to safe React nodes (no `dangerouslySetInnerHTML`).
-- **Smart grouping** — consecutive messages from same author within 5 min collapse into one bubble with one avatar/timestamp.
-- **Search** — Postgres `tsvector` index on `messages.body`; searchable from a top bar (current space scope or global).
-- **Members list** — per-space drawer; copy-username button on each row.
-- **Custom tags** — space owners/managers assign colored tags to members; render next to username.
-- **Status** — set in user settings, shown in DMs and on hover cards.
-- **Events** — per-space calendar view (month + agenda) with RSVPs.
-- **Browse public spaces** — searchable grid; "Join by code" tab in same dialog.
-- **Space identity** — owner can swap between uploaded image OR emoji + background color.
-- **Notifications** — in-app toast + unread badges; browser Notification API when tab unfocused.
+## Districts / Organizations (skip for now, just trying to plan ahead) — how I'd do it without it being painful
 
-## Bot integration (your Apps Script + HTML)
+Think of a **District** (or "Organization" / "Network") as a group of spaces with shared admins.
 
-- Owner opens **Space → Bot** and pastes the Apps Script Web App URL + auth token. Stored in `bot_configs` (token encrypted at rest via Cloud).
-- Bot panel renders the uploaded HTML in a sandboxed iframe. We host your HTML at `public/bot/artistry-hub.html` and inject the configured URL/token via `postMessage` so it doesn't have to be edited.
-- The bot can post into the current channel via a server function that proxies to the Apps Script webhook (so the token never reaches the browser).
-- Slash-command surface: typing `/` in a channel opens a command palette wired to the same Apps Script `action` endpoints (warning, mute, etc.) when a bot is configured.
+**Minimal model**
 
-## Suggestions worth adding (low extra cost)
+- `districts(id, name, slug, owner_id, created_at)`
+- `district_members(district_id, user_id, role)` — role: `admin` | `staff`
+- `spaces.district_id` — nullable FK. A space optionally belongs to one district.
 
-- **Pinned messages** per channel
-- **Read receipts / unread markers** ("New" line where you left off)
-- **Drafts** persisted per channel
-- **Slash commands beyond bot**: `/me`, `/shrug`, `/poll`, `/event`
-- **Invite links** with optional expiry/uses (in addition to join codes)
-- **Per-channel notification level** (all / mentions / muted)
-- **Soft-delete + audit log** so owners can review deleted messages
+**What that unlocks for ~1 day of work**
 
-Want any of these dropped to save credits, or all included?
+1. District admins automatically get `manager` permissions in every space attached to their district (via a `has_district_role` security-definer function used in RLS).
+2. District-scoped invite codes: join code creates membership in *every* space in the district (think: a school joining all class spaces at once).
+3. A **District dashboard** at `/app/d/$slug` listing all spaces, member counts, recent reports, and a "Create space in this district" button.
+4. District-wide announcements: a `#announcements` channel auto-created in every child space, write-locked to district admins.
+5. District-wide auto-mod / blocked-word inheritance — child spaces can opt-in to the parent's lists.
 
-Include all, also include a thing like in google chat where when someone is typing it says person is typing and replaces person with that persons name or if too many people are typing it says many people are typing. For the html bot thing only owners and managers can access that one, can it just be auto set up there so that nothing has to be done for it? if not we will not do that part for now and we can do all the bot stuff in a later update. Have users be able to delete their own messages and managers can delete regular members messages as well, owners can delete anyones. "GIFs need a Tenor API key (free). I'll ask for it when we hit that step." when we get to that step please give me clear instructions on what to do. also lets just not do the bot thing yet, we can add that in a later update, that way we are saving some credits and lowing the risk a bit. do the slash commands idea you came up with tho. Please do as much testing as you can do without costing extra credits if possible that way it can just work the first try.
+**Setup flow for a real user (e.g. a school)**
 
-## Build order inside the single pass
+1. Site admin (you) creates the district and assigns the school's IT person as district admin.
+2. District admin creates spaces (one per class) from the dashboard — they're auto-attached.
+3. Teachers are invited as space owners; students join via the district join code.
+4. Reports inside any class space surface in the district dashboard, not just per-space.
 
-1. Enable Cloud, schema + RLS + roles function + storage bucket
-2. Auth (email+username signup, login by either, reset)
-3. App shell, theme system, user settings
-4. Spaces + channels + membership + role tools
-5. Messaging + realtime + smart grouping + rich text + mentions
-6. Reactions, threads, attachments, GIFs/stickers, polls
-7. Filters (blocked words + rate limit + strikes), moderation actions
-8. Events calendar, search, members list, custom tags, status
-9. Browse public + join-by-code, space identity editor
-10. Bot panel + Apps Script proxy + slash commands
-11. Polish, empty states, error boundaries, SEO meta
+**Why this stays easy**
 
-## Risk / honest caveats
+- It's *additive* — `district_id` is nullable, so existing spaces are unaffected.
+- Permissions reuse the same `has_role`/`has_space_role` pattern you already trust.
+- No new UI primitives — the district dashboard reuses the admin dashboard layout.
 
-- This is a *very* large build for one pass. If a single step errors, fixing it costs additional credits. I'll keep components small and isolated to limit blast radius.
-- GIFs need a Tenor API key (free). I'll ask for it when we hit that step.
-- Bot panel assumes your Apps Script Web App is deployed "Anyone with link". No changes to your script required.
+**What I'd skip for v1**: cross-district federation, billing tiers per district, custom branding per district. Easy to add later.
 
-Approve to start, or tell me what to cut/add.
+---
+
+If this plan looks good, hit approve and I'll start with the migrations (one big one covering all new tables/columns), then knock out the features top-down. I'll batch closely-related ones to keep the diff readable.
