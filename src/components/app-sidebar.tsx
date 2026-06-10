@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Plus, Compass, MessageSquare, Settings, LogOut, Search } from "lucide-react";
+import { Plus, Compass, MessageSquare, Settings, LogOut, Search, Bookmark, Shield } from "lucide-react";
 import { CreateSpaceDialog } from "./create-space-dialog";
 import { JoinSpaceDialog } from "./join-space-dialog";
 import {
@@ -29,6 +29,13 @@ export function AppSidebar() {
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [openCreate, setOpenCreate] = useState(false);
   const [openJoin, setOpenJoin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -127,6 +134,14 @@ export function AppSidebar() {
             <DropdownMenuItem onClick={() => nav({ to: "/app/settings" })}>
               <Settings className="h-4 w-4 mr-2" /> Settings
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => nav({ to: "/app/saved" })}>
+              <Bookmark className="h-4 w-4 mr-2" /> Saved messages
+            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem onClick={() => nav({ to: "/app/admin" })}>
+                <Shield className="h-4 w-4 mr-2" /> Site admin
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={async () => {
                 await signOut();

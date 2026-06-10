@@ -40,9 +40,15 @@ const FEATURES = [
 function Landing() {
   const [idx, setIdx] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const [showBrand, setShowBrand] = useState(false);
   useEffect(() => {
     const id = setInterval(() => setIdx((i) => (i + 1) % Math.ceil(FEATURES.length / 4)), 10000);
     return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    // Reveal "Atrium" word after the logo finishes its slide so nothing peeks out the other side.
+    const t = setTimeout(() => setShowBrand(true), 700);
+    return () => clearTimeout(t);
   }, []);
   const pageSize = 4;
   const pageCount = Math.ceil(FEATURES.length / pageSize);
@@ -61,8 +67,10 @@ function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="flex items-center justify-between px-6 py-4 border-b">
         <div className="flex items-center gap-2 font-bold text-lg">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-pink-500 text-white">A</span>
-          Atrium
+          <span className="relative z-10 inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-pink-500 text-white">A</span>
+          <span className="overflow-hidden inline-block" style={{ width: showBrand ? "auto" : 0 }}>
+            {showBrand && <span className="brand-slide-in">Atrium</span>}
+          </span>
         </div>
         <div className="flex gap-2">
           <Link to={"/forum" as any}><Button variant="ghost">Forum</Button></Link>
@@ -72,7 +80,8 @@ function Landing() {
       </header>
       <main className="mx-auto max-w-5xl px-6 py-20 text-center">
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-          Your community,<br />all in one space.
+          <span className="hero-animate">Your community,</span><br />
+          <span className="hero-animate" style={{ animationDelay: "150ms" }}>all in one space.</span>
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto">Built like Discord, organized like Google Chat. Spaces, channels, threads, polls, events, DMs, and bots — without the bloat.</p>
         <p className="mt-3 text-sm font-medium tracking-wide text-primary">Brought to you by The Artistry Hub</p>

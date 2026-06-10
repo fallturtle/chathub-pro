@@ -17,12 +17,15 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppSavedRouteImport } from './routes/app.saved'
+import { Route as AppAdminRouteImport } from './routes/app.admin'
 import { Route as AppSSpaceIdRouteImport } from './routes/app.s.$spaceId'
 import { Route as AppDmThreadIdRouteImport } from './routes/app.dm.$threadId'
 import { Route as AppSSpaceIdIndexRouteImport } from './routes/app.s.$spaceId.index'
 import { Route as AppSSpaceIdTagsRouteImport } from './routes/app.s.$spaceId.tags'
 import { Route as AppSSpaceIdSettingsRouteImport } from './routes/app.s.$spaceId.settings'
 import { Route as AppSSpaceIdSearchRouteImport } from './routes/app.s.$spaceId.search'
+import { Route as AppSSpaceIdReportsRouteImport } from './routes/app.s.$spaceId.reports'
 import { Route as AppSSpaceIdMembersRouteImport } from './routes/app.s.$spaceId.members'
 import { Route as AppSSpaceIdForumRouteImport } from './routes/app.s.$spaceId.forum'
 import { Route as AppSSpaceIdEventsRouteImport } from './routes/app.s.$spaceId.events'
@@ -71,6 +74,16 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSavedRoute = AppSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSSpaceIdRoute = AppSSpaceIdRouteImport.update({
   id: '/s/$spaceId',
   path: '/s/$spaceId',
@@ -99,6 +112,11 @@ const AppSSpaceIdSettingsRoute = AppSSpaceIdSettingsRouteImport.update({
 const AppSSpaceIdSearchRoute = AppSSpaceIdSearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => AppSSpaceIdRoute,
+} as any)
+const AppSSpaceIdReportsRoute = AppSSpaceIdReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AppSSpaceIdRoute,
 } as any)
 const AppSSpaceIdMembersRoute = AppSSpaceIdMembersRouteImport.update({
@@ -144,6 +162,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/app/admin': typeof AppAdminRoute
+  '/app/saved': typeof AppSavedRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
@@ -154,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/reports': typeof AppSSpaceIdReportsRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
   '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
@@ -166,6 +187,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/app/admin': typeof AppAdminRoute
+  '/app/saved': typeof AppSavedRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
@@ -175,6 +198,7 @@ export interface FileRoutesByTo {
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/reports': typeof AppSSpaceIdReportsRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
   '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
@@ -189,6 +213,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/app/admin': typeof AppAdminRoute
+  '/app/saved': typeof AppSavedRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
   '/app/dm/$threadId': typeof AppDmThreadIdRoute
@@ -199,6 +225,7 @@ export interface FileRoutesById {
   '/app/s/$spaceId/events': typeof AppSSpaceIdEventsRoute
   '/app/s/$spaceId/forum': typeof AppSSpaceIdForumRoute
   '/app/s/$spaceId/members': typeof AppSSpaceIdMembersRoute
+  '/app/s/$spaceId/reports': typeof AppSSpaceIdReportsRoute
   '/app/s/$spaceId/search': typeof AppSSpaceIdSearchRoute
   '/app/s/$spaceId/settings': typeof AppSSpaceIdSettingsRoute
   '/app/s/$spaceId/tags': typeof AppSSpaceIdTagsRoute
@@ -214,6 +241,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/app/admin'
+    | '/app/saved'
     | '/app/settings'
     | '/app/'
     | '/app/dm/$threadId'
@@ -224,6 +253,7 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/reports'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
     | '/app/s/$spaceId/tags'
@@ -236,6 +266,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/app/admin'
+    | '/app/saved'
     | '/app/settings'
     | '/app'
     | '/app/dm/$threadId'
@@ -245,6 +277,7 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/reports'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
     | '/app/s/$spaceId/tags'
@@ -258,6 +291,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/app/admin'
+    | '/app/saved'
     | '/app/settings'
     | '/app/'
     | '/app/dm/$threadId'
@@ -268,6 +303,7 @@ export interface FileRouteTypes {
     | '/app/s/$spaceId/events'
     | '/app/s/$spaceId/forum'
     | '/app/s/$spaceId/members'
+    | '/app/s/$spaceId/reports'
     | '/app/s/$spaceId/search'
     | '/app/s/$spaceId/settings'
     | '/app/s/$spaceId/tags'
@@ -343,6 +379,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/saved': {
+      id: '/app/saved'
+      path: '/saved'
+      fullPath: '/app/saved'
+      preLoaderRoute: typeof AppSavedRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin': {
+      id: '/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/s/$spaceId': {
       id: '/app/s/$spaceId'
       path: '/s/$spaceId'
@@ -383,6 +433,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/app/s/$spaceId/search'
       preLoaderRoute: typeof AppSSpaceIdSearchRouteImport
+      parentRoute: typeof AppSSpaceIdRoute
+    }
+    '/app/s/$spaceId/reports': {
+      id: '/app/s/$spaceId/reports'
+      path: '/reports'
+      fullPath: '/app/s/$spaceId/reports'
+      preLoaderRoute: typeof AppSSpaceIdReportsRouteImport
       parentRoute: typeof AppSSpaceIdRoute
     }
     '/app/s/$spaceId/members': {
@@ -443,6 +500,7 @@ interface AppSSpaceIdRouteChildren {
   AppSSpaceIdEventsRoute: typeof AppSSpaceIdEventsRoute
   AppSSpaceIdForumRoute: typeof AppSSpaceIdForumRoute
   AppSSpaceIdMembersRoute: typeof AppSSpaceIdMembersRoute
+  AppSSpaceIdReportsRoute: typeof AppSSpaceIdReportsRoute
   AppSSpaceIdSearchRoute: typeof AppSSpaceIdSearchRoute
   AppSSpaceIdSettingsRoute: typeof AppSSpaceIdSettingsRoute
   AppSSpaceIdTagsRoute: typeof AppSSpaceIdTagsRoute
@@ -456,6 +514,7 @@ const AppSSpaceIdRouteChildren: AppSSpaceIdRouteChildren = {
   AppSSpaceIdEventsRoute: AppSSpaceIdEventsRoute,
   AppSSpaceIdForumRoute: AppSSpaceIdForumRoute,
   AppSSpaceIdMembersRoute: AppSSpaceIdMembersRoute,
+  AppSSpaceIdReportsRoute: AppSSpaceIdReportsRoute,
   AppSSpaceIdSearchRoute: AppSSpaceIdSearchRoute,
   AppSSpaceIdSettingsRoute: AppSSpaceIdSettingsRoute,
   AppSSpaceIdTagsRoute: AppSSpaceIdTagsRoute,
@@ -468,6 +527,8 @@ const AppSSpaceIdRouteWithChildren = AppSSpaceIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
+  AppSavedRoute: typeof AppSavedRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppDmThreadIdRoute: typeof AppDmThreadIdRoute
@@ -475,6 +536,8 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
+  AppSavedRoute: AppSavedRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppDmThreadIdRoute: AppDmThreadIdRoute,
