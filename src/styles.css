@@ -134,6 +134,33 @@
 
 html, body, #root { height: 100%; }
 
+@keyframes hero-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes hero-shimmer {
+  0%, 100% { opacity: 0.7; filter: hue-rotate(0deg); }
+  50% { opacity: 1; filter: hue-rotate(25deg); }
+}
+@keyframes brand-slide-in {
+  0% { opacity: 0; transform: translateX(-26px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.hero-animate {
+  display: inline-block;
+  background: linear-gradient(90deg, oklch(0.65 0.24 295), oklch(0.7 0.22 350), oklch(0.7 0.2 230), oklch(0.65 0.24 295));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hero-pulse 1500ms ease-in-out infinite, hero-shimmer 2000ms ease-in-out infinite;
+}
+.brand-slide-in {
+  display: inline-block;
+  opacity: 0;
+  animation: brand-slide-in 650ms ease-out forwards;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
