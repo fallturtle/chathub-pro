@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { format, isToday, isYesterday } from "date-fns";
-import { Pin, Trash2, SmilePlus, Reply, Pencil, Check, X, Download } from "lucide-react";
+import { Pin, Trash2, SmilePlus, Reply, Pencil, Check, X, Download, Bookmark, Flag } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import type { ReplyTarget } from "./message-composer";
 import { linkify } from "@/lib/linkify";
 import { ConfirmAction } from "@/components/confirm-action";
+import { ReportDialog } from "@/components/report-dialog";
 
 type Msg = {
   id: string; body: string; author_id: string; created_at: string | null; bot_name?: string | null;
@@ -41,6 +42,7 @@ export function MessageList({
   const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
+  const [reportTarget, setReportTarget] = useState<{ messageId: string; username?: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const filterText = (t: string) => {
@@ -206,6 +208,12 @@ export function MessageList({
     if (error) toast.error(error.message); else setEditingId(null);
   };
 
+  const bookmarkMsg = async (mid: string) => {
+    if (!user) return;
+    const { error } = await supabase.from("bookmarks").insert({ user_id: user.id, message_id: mid });
+    if (error) toast.error(error.message); else toast.success("Saved to bookmarks");
+  };
+
   const votePoll = async (poll: Poll, optionId: string) => {
     if (!user) return;
     const current = (pollVotes[poll.id] ?? []).filter((v) => v.user_id === user.id);
@@ -355,6 +363,10 @@ export function MessageList({
                           {onReply && (
                             <button onClick={() => onReply({ id: m.id, body: m.body, authorName: prof?.display_name || prof?.username || "user" })} className="p-1 hover:bg-accent rounded" title="Reply"><Reply className="h-4 w-4" /></button>
                           )}
+                          <button onClick={() => bookmarkMsg(m.id)} className="p-1 hover:bg-accent rounded" title="Save"><Bookmark className="h-4 w-4" /></button>
+                          {spaceId && m.author_id !== user?.id && (
+                            <button onClick={() => setReportTarget({ messageId: m.id, username: prof?.username })} className="p-1 hover:bg-accent rounded text-amber-500" title="Report"><Flag className="h-4 w-4" /></button>
+                          )}
                           {m.author_id === user?.id && !m.deleted_at && (
                             <button onClick={() => startEdit(m)} className="p-1 hover:bg-accent rounded" title="Edit"><Pencil className="h-4 w-4" /></button>
                           )}
@@ -376,6 +388,15 @@ export function MessageList({
           </div>
         );
       })}
+      {spaceId && reportTarget && (
+        <ReportDialog
+          open={!!reportTarget}
+          onOpenChange={(o) => { if (!o) setReportTarget(null); }}
+          spaceId={spaceId}
+          messageId={reportTarget.messageId}
+          defaultTargetUsername={reportTarget.username}
+        />
+      )}
     </div>
   );
 }

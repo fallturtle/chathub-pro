@@ -45,6 +45,23 @@ export function MessageComposer({
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const draftKey = channelId ? `draft:channel:${channelId}` : dmThreadId ? `draft:dm:${dmThreadId}` : null;
+
+  // Load draft when channel/dm changes
+  useEffect(() => {
+    if (!draftKey) { setBody(""); return; }
+    try { setBody(localStorage.getItem(draftKey) ?? ""); } catch { setBody(""); }
+  }, [draftKey]);
+
+  // Persist draft (debounced via rAF)
+  useEffect(() => {
+    if (!draftKey) return;
+    const h = setTimeout(() => {
+      try { body ? localStorage.setItem(draftKey, body) : localStorage.removeItem(draftKey); } catch {}
+    }, 250);
+    return () => clearTimeout(h);
+  }, [body, draftKey]);
+
   useEffect(() => {
     if (taRef.current) {
       taRef.current.style.height = "auto";
@@ -139,6 +156,21 @@ export function MessageComposer({
 
   const send = async () => {
     if (!body.trim() || sending) return;
+    // /report command
+    const reportMatch = body.match(/^\/report\s+@?(\S+)\s+(.+)$/i);
+    if (reportMatch && spaceId && user) {
+      const uname = reportMatch[1].toLowerCase();
+      const reason = reportMatch[2].trim();
+      const { data: prof } = await supabase.from("profiles").select("id").ilike("username", uname).maybeSingle();
+      const { error } = await supabase.from("reports").insert({
+        space_id: spaceId, reporter_id: user.id,
+        target_user_id: (prof as any)?.id ?? null, reason,
+      });
+      if (error) { toast.error(error.message); return; }
+      toast.success("Report sent to space managers");
+      setBody(""); if (draftKey) try { localStorage.removeItem(draftKey); } catch {}
+      return;
+    }
     // Check for slash command match
     const m = body.match(/^\/([a-z]+)(?:\s+(.*))?$/i);
     if (m) {
@@ -148,7 +180,11 @@ export function MessageComposer({
     setSending(true);
     const id = await insertMessage();
     setSending(false);
-    if (id) { setBody(""); onClearReply?.(); }
+    if (id) {
+      setBody("");
+      if (draftKey) try { localStorage.removeItem(draftKey); } catch {}
+      onClearReply?.();
+    }
   };
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
