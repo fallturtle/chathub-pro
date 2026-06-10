@@ -1,17 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bookmark, Trash2 } from "lucide-react";
+import { Bookmark, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/saved")({ component: SavedPage });
 
 function SavedPage() {
   const { user } = useAuth();
+  const nav = useNavigate();
   const [items, setItems] = useState<any[]>([]);
 
   const load = async () => {
@@ -32,9 +32,11 @@ function SavedPage() {
   };
 
   return (
-    <AppShell>
-      <div className="p-6 max-w-3xl mx-auto space-y-4 overflow-y-auto">
-        <div className="flex items-center gap-2"><Bookmark className="h-5 w-5 text-primary" /><h1 className="text-2xl font-bold">Saved messages</h1></div>
+      <div className="p-6 max-w-3xl mx-auto space-y-4 overflow-y-auto w-full">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2"><Bookmark className="h-5 w-5 text-primary" /><h1 className="text-2xl font-bold">Saved messages</h1></div>
+          <Button variant="outline" size="sm" onClick={() => nav({ to: "/app" })}><ArrowLeft className="h-4 w-4 mr-1" /> Back to app</Button>
+        </div>
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing saved yet. Hover a message and click the bookmark icon.</p>
         ) : items.map((b) => (
@@ -47,6 +49,5 @@ function SavedPage() {
           </Card>
         ))}
       </div>
-    </AppShell>
   );
 }
