@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { format, isToday, isYesterday } from "date-fns";
-import { Pin, Trash2, SmilePlus, Reply, Pencil, Check, X, Download } from "lucide-react";
+import { Pin, Trash2, SmilePlus, Reply, Pencil, Check, X, Download, Bookmark, Flag } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import type { ReplyTarget } from "./message-composer";
 import { linkify } from "@/lib/linkify";
 import { ConfirmAction } from "@/components/confirm-action";
+import { ReportDialog } from "@/components/report-dialog";
 
 type Msg = {
   id: string; body: string; author_id: string; created_at: string | null; bot_name?: string | null;
@@ -41,6 +42,7 @@ export function MessageList({
   const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
+  const [reportTarget, setReportTarget] = useState<{ messageId: string; username?: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const filterText = (t: string) => {
@@ -204,6 +206,12 @@ export function MessageList({
   const saveEdit = async (mid: string) => {
     const { error } = await supabase.from("messages").update({ body: editBody, edited_at: new Date().toISOString() }).eq("id", mid);
     if (error) toast.error(error.message); else setEditingId(null);
+  };
+
+  const bookmarkMsg = async (mid: string) => {
+    if (!user) return;
+    const { error } = await supabase.from("bookmarks").insert({ user_id: user.id, message_id: mid });
+    if (error) toast.error(error.message); else toast.success("Saved to bookmarks");
   };
 
   const votePoll = async (poll: Poll, optionId: string) => {
