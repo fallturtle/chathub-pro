@@ -363,6 +363,10 @@ export function MessageList({
                           {onReply && (
                             <button onClick={() => onReply({ id: m.id, body: m.body, authorName: prof?.display_name || prof?.username || "user" })} className="p-1 hover:bg-accent rounded" title="Reply"><Reply className="h-4 w-4" /></button>
                           )}
+                          <button onClick={() => bookmarkMsg(m.id)} className="p-1 hover:bg-accent rounded" title="Save"><Bookmark className="h-4 w-4" /></button>
+                          {spaceId && m.author_id !== user?.id && (
+                            <button onClick={() => setReportTarget({ messageId: m.id, username: prof?.username })} className="p-1 hover:bg-accent rounded text-amber-500" title="Report"><Flag className="h-4 w-4" /></button>
+                          )}
                           {m.author_id === user?.id && !m.deleted_at && (
                             <button onClick={() => startEdit(m)} className="p-1 hover:bg-accent rounded" title="Edit"><Pencil className="h-4 w-4" /></button>
                           )}
@@ -384,6 +388,15 @@ export function MessageList({
           </div>
         );
       })}
+      {spaceId && reportTarget && (
+        <ReportDialog
+          open={!!reportTarget}
+          onOpenChange={(o) => { if (!o) setReportTarget(null); }}
+          spaceId={spaceId}
+          messageId={reportTarget.messageId}
+          defaultTargetUsername={reportTarget.username}
+        />
+      )}
     </div>
   );
 }
