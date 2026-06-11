@@ -42,7 +42,7 @@ export function MessageList({
   const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
-  const [reportTarget, setReportTarget] = useState<{ messageId: string; username?: string } | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ messageId: string; username?: string; body?: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const filterText = (t: string) => {
@@ -365,7 +365,7 @@ export function MessageList({
                           )}
                           <button onClick={() => bookmarkMsg(m.id)} className="p-1 hover:bg-accent rounded" title="Save"><Bookmark className="h-4 w-4" /></button>
                           {spaceId && m.author_id !== user?.id && (
-                            <button onClick={() => setReportTarget({ messageId: m.id, username: prof?.username })} className="p-1 hover:bg-accent rounded text-amber-500" title="Report"><Flag className="h-4 w-4" /></button>
+                            <button onClick={() => setReportTarget({ messageId: m.id, username: prof?.username, body: m.body })} className="p-1 hover:bg-accent rounded text-amber-500" title="Report this message"><Flag className="h-4 w-4" /></button>
                           )}
                           {m.author_id === user?.id && !m.deleted_at && (
                             <button onClick={() => startEdit(m)} className="p-1 hover:bg-accent rounded" title="Edit"><Pencil className="h-4 w-4" /></button>
@@ -395,6 +395,7 @@ export function MessageList({
           spaceId={spaceId}
           messageId={reportTarget.messageId}
           defaultTargetUsername={reportTarget.username}
+          messageBody={reportTarget.body}
         />
       )}
     </div>
