@@ -84,7 +84,9 @@ function Landing() {
           <span className="hero-animate" style={{ animationDelay: "150ms" }}>all in one space.</span>
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto">Built like Discord, organized like Google Chat. Spaces, channels, threads, polls, events, DMs, and bots — without the bloat.</p>
-        <p className="mt-3 text-sm font-medium tracking-wide text-primary">Brought to you by The Artistry Hub</p>
+        <p className="mt-3 text-sm font-medium tracking-wide text-primary">
+          Brought to you by <span className="hub-float">The Artistry Hub</span>
+        </p>
         <div className="mt-10 flex justify-center gap-3">
           <Link to="/signup"><Button size="lg">Get started — it's free</Button></Link>
           <Link to="/login"><Button size="lg" variant="outline">I have an account</Button></Link>

@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { setChannelPassword } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Plus, Settings, Users, Calendar, Bot, ChevronDown, Search, Tag, MessageCircle, Webhook } from "lucide-react";
+import { Hash, Megaphone, BookOpen, Link as LinkIcon, Lock, Plus, Settings, Users, Calendar, Bot, ChevronDown, Search, Tag, MessageCircle, Webhook, Flag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -92,6 +92,7 @@ function SpaceLayout() {
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/forum", params: { spaceId } })}><MessageCircle className="h-4 w-4 mr-2" />Forum</DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/bot", params: { spaceId } })}><Webhook className="h-4 w-4 mr-2" />Webhooks</DropdownMenuItem>
             <DropdownMenuItem onClick={() => (nav as any)({ to: "/app/s/$spaceId/bots", params: { spaceId } })}><Bot className="h-4 w-4 mr-2" />Bots</DropdownMenuItem>
+            {canManage && <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/reports", params: { spaceId } })}><Flag className="h-4 w-4 mr-2" />Reports</DropdownMenuItem>}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigator.clipboard.writeText(joinCode).then(() => toast.success("Copied join code"))} disabled={!joinCode}>Copy join code</DropdownMenuItem>
             {canManage && <DropdownMenuItem onClick={() => nav({ to: "/app/s/$spaceId/settings", params: { spaceId } })}><Settings className="h-4 w-4 mr-2" />Settings</DropdownMenuItem>}
