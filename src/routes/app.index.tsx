@@ -45,6 +45,18 @@ function DmHome() {
 
   useEffect(() => { loadThreads(); /* eslint-disable-next-line */ }, [user]);
 
+  // Realtime: refresh when DM participation changes (new thread, accepted) or new message arrives
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`dm-home-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "dm_participants", filter: `user_id=eq.${user.id}` }, () => loadThreads())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => loadThreads())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const accept = async (threadId: string) => {
     if (!user) return;
     await supabase.from("dm_participants").update({ accepted: true }).match({ thread_id: threadId, user_id: user.id });

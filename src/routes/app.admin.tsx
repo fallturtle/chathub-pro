@@ -19,6 +19,11 @@ function AdminPage() {
   const [promoteQ, setPromoteQ] = useState("");
   const [promoting, setPromoting] = useState(false);
   const [admins, setAdmins] = useState<any[]>([]);
+  const [siteOwner, setSiteOwner] = useState<string | null>(null);
+  const [bans, setBans] = useState<any[]>([]);
+  const [appeals, setAppeals] = useState<any[]>([]);
+  const [banQ, setBanQ] = useState("");
+  const [banReason, setBanReason] = useState("");
 
   const loadAdmins = async () => {
     const { data } = await supabase
@@ -44,8 +49,41 @@ function AdminPage() {
       setReports(r.data ?? []);
       setStats({ spaces: s.count ?? 0, users: u.count ?? 0, reports: sr.count ?? 0 });
       loadAdmins();
+      const { data: ss } = await supabase.from("site_settings" as any).select("owner_user_id").eq("id", 1).maybeSingle();
+      setSiteOwner((ss as any)?.owner_user_id ?? null);
+      loadBans();
+      loadAppeals();
     })();
   }, [user]);
+
+  const loadBans = async () => {
+    const { data } = await supabase.from("site_bans" as any).select("user_id, reason, banned_at, profile:profiles!user_id(username,display_name)").order("banned_at", { ascending: false });
+    setBans((data ?? []) as any[]);
+  };
+  const loadAppeals = async () => {
+    const { data } = await supabase.from("ban_appeals" as any).select("*, profile:profiles!user_id(username,display_name)").order("created_at", { ascending: false });
+    setAppeals((data ?? []) as any[]);
+  };
+
+  const banUser = async () => {
+    const q = banQ.trim().replace(/^@/, "");
+    if (!q) return;
+    const { data: p } = await supabase.from("profiles").select("id").ilike("username", q).maybeSingle();
+    if (!p) return toast.error("No user matched");
+    const { error } = await supabase.from("site_bans" as any).insert({ user_id: (p as any).id, reason: banReason.trim() || "Violated community guidelines", banned_by: user!.id });
+    if (error) return toast.error(error.message);
+    toast.success("User banned site-wide");
+    setBanQ(""); setBanReason(""); loadBans();
+  };
+  const unbanUser = async (uid: string) => {
+    const { error } = await supabase.from("site_bans" as any).delete().eq("user_id", uid);
+    if (error) return toast.error(error.message);
+    loadBans();
+  };
+  const updateAppeal = async (id: string, status: string) => {
+    await supabase.from("ban_appeals" as any).update({ status }).eq("id", id);
+    loadAppeals();
+  };
 
   const setStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("site_reports").update({ status }).eq("id", id);
@@ -73,6 +111,7 @@ function AdminPage() {
 
   const demote = async (uid: string) => {
     if (uid === user?.id) return toast.error("You can't demote yourself");
+    if (uid === siteOwner) return toast.error("The site owner cannot be removed");
     const { error } = await supabase.from("user_roles").delete().match({ user_id: uid, role: "admin" });
     if (error) return toast.error(error.message);
     toast.success("Removed admin");
@@ -109,12 +148,56 @@ function AdminPage() {
           <div className="space-y-1">
             {admins.map((a) => (
               <div key={a.user_id} className="flex items-center justify-between text-sm border rounded px-3 py-1.5">
-                <span>@{a.profile?.username ?? a.user_id.slice(0,8)} <span className="text-muted-foreground">— {a.profile?.display_name}</span></span>
-                <Button size="sm" variant="ghost" onClick={() => demote(a.user_id)} disabled={a.user_id === user?.id}>Remove</Button>
+                <span>
+                  @{a.profile?.username ?? a.user_id.slice(0,8)} <span className="text-muted-foreground">— {a.profile?.display_name}</span>
+                  {a.user_id === siteOwner && <span className="ml-2 text-[10px] uppercase font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">Owner</span>}
+                </span>
+                <Button size="sm" variant="ghost" onClick={() => demote(a.user_id)} disabled={a.user_id === user?.id || a.user_id === siteOwner}>Remove</Button>
               </div>
             ))}
           </div>
         </Card>
+
+        <Card className="p-4 space-y-3">
+          <h2 className="font-semibold">Ban a user site-wide</h2>
+          <div className="flex gap-2 flex-wrap">
+            <Input value={banQ} onChange={(e) => setBanQ(e.target.value)} placeholder="@username" className="max-w-xs" />
+            <Input value={banReason} onChange={(e) => setBanReason(e.target.value)} placeholder="Reason shown to user" className="flex-1 min-w-[200px]" />
+            <Button variant="destructive" onClick={banUser} disabled={!banQ.trim()}>Ban</Button>
+          </div>
+          {bans.length > 0 && (
+            <div className="space-y-1 pt-2">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Active bans</div>
+              {bans.map((b: any) => (
+                <div key={b.user_id} className="flex items-center justify-between text-sm border rounded px-3 py-1.5">
+                  <span>@{b.profile?.username ?? b.user_id.slice(0,8)} <span className="text-muted-foreground">— {b.reason}</span></span>
+                  <Button size="sm" variant="ghost" onClick={() => unbanUser(b.user_id)}>Unban</Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {appeals.length > 0 && (
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold">Ban appeals ({appeals.filter((a: any) => a.status === 'pending').length} pending)</h2>
+            {appeals.map((a: any) => (
+              <div key={a.id} className="border rounded p-3 space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>@{a.profile?.username ?? a.user_id.slice(0,8)} · {new Date(a.created_at).toLocaleString()}</span>
+                  <span className="px-2 py-0.5 rounded bg-muted">{a.status}</span>
+                </div>
+                <div className="text-sm whitespace-pre-wrap">{a.body}</div>
+                {a.status === "pending" && (
+                  <div className="flex gap-2 pt-1">
+                    <Button size="sm" variant="outline" onClick={async () => { await unbanUser(a.user_id); await updateAppeal(a.id, "approved"); }}>Approve & unban</Button>
+                    <Button size="sm" variant="ghost" onClick={() => updateAppeal(a.id, "denied")}>Deny</Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </Card>
+        )}
         <div>
           <h2 className="font-semibold mb-2 flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Escalated reports</h2>
           {reports.length === 0 ? <p className="text-sm text-muted-foreground">Nothing escalated yet.</p> : (

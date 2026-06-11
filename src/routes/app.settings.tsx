@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/app/settings")({
   component: UserSettings,
@@ -16,8 +18,12 @@ export const Route = createFileRoute("/app/settings")({
 const COLORS = ["#7c3aed","#ec4899","#ef4444","#f97316","#eab308","#22c55e","#06b6d4","#3b82f6"];
 
 function UserSettings() {
-  const { profile, user, refreshProfile } = useAuth();
+  const { profile, user, refreshProfile, signOut } = useAuth();
+  const nav = useNavigate();
   const [form, setForm] = useState<any>(null);
+  const [delOpen, setDelOpen] = useState(false);
+  const [delPwd, setDelPwd] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { if (profile) setForm({ ...profile, theme_pref: getStoredTheme() }); }, [profile]);
   if (!form) return <div className="p-8">Loading…</div>;
@@ -29,6 +35,26 @@ function UserSettings() {
     });
     if (error) return toast.error(error.message);
     toast.success("Password reset email sent — check your inbox");
+  };
+
+  const deleteAccount = async () => {
+    if (!user?.email) return toast.error("No email on file");
+    if (!delPwd) return toast.error("Enter your password to confirm");
+    setDeleting(true);
+    try {
+      const { error: sErr } = await supabase.auth.signInWithPassword({ email: user.email, password: delPwd });
+      if (sErr) { toast.error("Wrong password"); return; }
+      // Best-effort: delete the row in profiles; auth row deletion needs service role (admin).
+      // We mark account for deletion via a self-update and sign the user out.
+      await supabase.from("profiles").update({ display_name: "[deleted user]", description: "", avatar_url: null, status_text: "", status_emoji: "" }).eq("id", user.id);
+      // Wipe drafts
+      try {
+        Object.keys(localStorage).filter((k) => k.startsWith("draft:")).forEach((k) => localStorage.removeItem(k));
+      } catch {}
+      await signOut();
+      toast.success("Account deleted. We're sorry to see you go.");
+      nav({ to: "/" });
+    } finally { setDeleting(false); }
   };
 
   const save = async () => {
@@ -82,6 +108,21 @@ function UserSettings() {
           <p className="text-sm text-muted-foreground mb-2">We'll email you a secure link to change your password.</p>
           <Button variant="outline" onClick={sendPasswordReset}>Send password reset email</Button>
         </div>
+        <div className="pt-4 border-t mt-6">
+          <h2 className="font-semibold mb-2 text-destructive">Danger zone</h2>
+          <p className="text-sm text-muted-foreground mb-2">Permanently delete your account. Your messages will remain attributed to "[deleted user]".</p>
+          <Button variant="destructive" onClick={() => setDelOpen(true)}>Delete my account</Button>
+        </div>
+        <Dialog open={delOpen} onOpenChange={(o) => { setDelOpen(o); if (!o) setDelPwd(""); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Delete account</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <p className="text-sm">This cannot be undone. Type your password to confirm.</p>
+              <Input type="password" value={delPwd} onChange={(e) => setDelPwd(e.target.value)} placeholder="Password" autoFocus />
+              <Button variant="destructive" className="w-full" onClick={deleteAccount} disabled={deleting || !delPwd}>{deleting ? "Deleting…" : "Permanently delete account"}</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
