@@ -146,6 +146,10 @@ html, body, #root { height: 100%; }
   0% { opacity: 0; transform: translateX(-26px); }
   100% { opacity: 1; transform: translateX(0); }
 }
+@keyframes hub-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
 .hero-animate {
   display: inline-block;
   background: linear-gradient(90deg, oklch(0.65 0.24 295), oklch(0.7 0.22 350), oklch(0.7 0.2 230), oklch(0.65 0.24 295));
@@ -153,12 +157,16 @@ html, body, #root { height: 100%; }
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: hero-pulse 1500ms ease-in-out infinite, hero-shimmer 2000ms ease-in-out infinite;
+  animation: hero-pulse 4000ms ease-in-out infinite, hero-shimmer 4000ms ease-in-out infinite;
 }
 .brand-slide-in {
   display: inline-block;
   opacity: 0;
   animation: brand-slide-in 650ms ease-out forwards;
+}
+.hub-float {
+  display: inline-block;
+  animation: hub-float 2000ms ease-in-out infinite;
 }
 
 @layer base {

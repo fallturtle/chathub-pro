@@ -96,6 +96,33 @@ export type Database = {
           },
         ]
       }
+      ban_appeals: {
+        Row: {
+          admin_notes: string | null
+          body: string
+          created_at: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           created_at: string
@@ -1144,6 +1171,27 @@ export type Database = {
           },
         ]
       }
+      site_bans: {
+        Row: {
+          banned_at: string
+          banned_by: string | null
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          banned_at?: string
+          banned_by?: string | null
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string | null
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_questions: {
         Row: {
           author_id: string
@@ -1218,6 +1266,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_settings: {
+        Row: {
+          id: number
+          owner_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          id: number
+          owner_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          owner_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       space_commands: {
         Row: {

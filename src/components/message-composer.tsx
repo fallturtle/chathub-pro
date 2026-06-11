@@ -24,6 +24,7 @@ const SLASH_COMMANDS: SlashCmd[] = [
   { name: "poll", desc: "Open the poll creator" },
   { name: "help", desc: "List all slash commands" },
   { name: "clear", desc: "Clear the composer" },
+  { name: "report", desc: "Report a member to space owners/managers — /report @username reason" },
 ];
 
 export function MessageComposer({
@@ -42,6 +43,7 @@ export function MessageComposer({
   const [plusOpen, setPlusOpen] = useState(false);
   const [gifOpen, setGifOpen] = useState(false);
   const [customEmojis, setCustomEmojis] = useState<{ name: string; url: string }[]>([]);
+  const [mentionUsers, setMentionUsers] = useState<{ id: string; username: string; display_name: string | null }[]>([]);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -76,6 +78,17 @@ export function MessageComposer({
     });
   }, [spaceId]);
 
+  // Pull members of this space for @ autocomplete (or DM other party)
+  useEffect(() => {
+    if (spaceId) {
+      supabase.from("space_members").select("profile:profiles!user_id(id,username,display_name)").eq("space_id", spaceId).then(({ data }) => {
+        setMentionUsers(((data ?? []) as any[]).map((r) => r.profile).filter(Boolean));
+      });
+    } else {
+      setMentionUsers([]);
+    }
+  }, [spaceId]);
+
   // :emoji autocomplete based on caret position
   const caret = taRef.current?.selectionStart ?? body.length;
   const upToCaret = body.slice(0, caret);
@@ -99,6 +112,29 @@ export function MessageComposer({
     setBody(newBody);
     requestAnimationFrame(() => {
       const pos = startOfToken + s.replacement.length;
+      taRef.current?.focus();
+      taRef.current?.setSelectionRange(pos, pos);
+    });
+  };
+
+  // @mention autocomplete (works for both /report and @mention)
+  const mentionMatch = upToCaret.match(/(^|\s)@([a-z0-9_]{0,32})$/i);
+  const mentionQuery = mentionMatch?.[2]?.toLowerCase() ?? null;
+  const mentionSuggestions = mentionQuery !== null
+    ? [
+        ...(mentionQuery === "" || "all".startsWith(mentionQuery) ? [{ id: "_all", username: "all", display_name: "Notify everyone in this channel" }] : []),
+        ...mentionUsers.filter((u) => u.username.toLowerCase().startsWith(mentionQuery)).slice(0, 8),
+      ]
+    : [];
+
+  const applyMentionSuggestion = (u: { username: string }) => {
+    if (!mentionMatch || mentionQuery === null) return;
+    const startOfToken = caret - mentionQuery.length - 1; // include '@'
+    const insert = `@${u.username} `;
+    const newBody = body.slice(0, startOfToken) + insert + body.slice(caret);
+    setBody(newBody);
+    requestAnimationFrame(() => {
+      const pos = startOfToken + insert.length;
       taRef.current?.focus();
       taRef.current?.setSelectionRange(pos, pos);
     });
@@ -269,6 +305,21 @@ export function MessageComposer({
           ))}
         </div>
       )}
+      {mentionSuggestions.length > 0 && suggestions.length === 0 && emojiSuggestions.length === 0 && (
+        <div className="absolute bottom-full left-3 right-3 mb-1 z-30 bg-popover border rounded-md shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+          <div className="px-3 py-1 text-[10px] uppercase tracking-wide text-muted-foreground border-b">Mention — Tab to insert</div>
+          {mentionSuggestions.map((u) => (
+            <button
+              key={u.id}
+              onMouseDown={(e) => { e.preventDefault(); applyMentionSuggestion(u); }}
+              className="w-full text-left px-3 py-1.5 hover:bg-accent text-sm flex items-center gap-2"
+            >
+              <span className="font-semibold">@{u.username}</span>
+              {u.display_name && <span className="text-xs text-muted-foreground truncate">{u.display_name}</span>}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="p-3">
         <div className="flex gap-2 items-end">
           <Popover open={plusOpen} onOpenChange={setPlusOpen}>
@@ -296,6 +347,11 @@ export function MessageComposer({
               if (e.key === "Tab" && emojiSuggestions.length > 0) {
                 e.preventDefault();
                 applyEmojiSuggestion(emojiSuggestions[0]);
+                return;
+              }
+              if (e.key === "Tab" && mentionSuggestions.length > 0) {
+                e.preventDefault();
+                applyMentionSuggestion(mentionSuggestions[0]);
                 return;
               }
               if (e.key === "Tab" && suggestions.length > 0) {
