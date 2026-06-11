@@ -1,3 +1,24 @@
+
+## Next-batch plan (queued, not yet built)
+
+### Organizations / Districts framework
+- New tables: `organizations` (id, name, slug, owner_id), `org_members` (org_id, user_id, role: 'admin'|'member'), `org_spaces` (org_id, space_id) — spaces can belong to one org.
+- Org admins can: create spaces inside the org, ban/unban across all org spaces in one click, see a single moderation queue, and set org-wide automod presets that override per-space settings.
+- UI: a new top-of-rail "Org switcher" (above the spaces list) showing org logos. Clicking filters the rail to spaces in that org. Personal spaces live under "Personal".
+- Onboarding: an org gets a join code (like spaces). Members joining via the org code are auto-added to the org's "general" space.
+
+### Voice/Video calls
+- Use LiveKit Cloud (free dev tier) — single shared room per channel, tokens minted in a serverFn using a service key. Adds: a "Start huddle" button in channel header, floating call window component with mute/cam/screen-share, presence list.
+- Stored only as ephemeral state; no recording (privacy + cost). 1:1 DM calls reuse the same room model.
+
+### Custom-branded auth/notification emails
+- Use the email-templates scaffold; build Atrium-branded `signup`, `recovery`, `magic-link` templates with the gradient logo + primary color.
+
+### Hard IP ban
+- Per-space + site bans currently only block account. To extend to IP: an edge route logs `request.ip` on every message insert via a serverFn wrapper, writes to `ip_bans` when banning, and rejects on sign-in via a hook. Cloudflare-only and best-effort (VPNs defeat it) — will document the limitation.
+
+### Message log export incl. deleted
+- Admin endpoint `/app/admin/exports` calls a serverFn using `supabaseAdmin` that selects all messages incl. soft-deleted, plus deleted_at, formats as CSV/JSON.
 Big update — I'll group the work so you can see what's in scope, what's a "lite" version, and what I'd push to a follow-up. At the end I'll answer your districts/orgs question.
 
 ## Group A — Ship in this update (full)
