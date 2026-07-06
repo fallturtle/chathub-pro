@@ -24,9 +24,23 @@ function UserSettings() {
   const [delOpen, setDelOpen] = useState(false);
   const [delPwd, setDelPwd] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
 
   useEffect(() => { if (profile) setForm({ ...profile, theme_pref: getStoredTheme() }); }, [profile]);
   if (!form) return <div className="p-8">Loading…</div>;
+
+  const changeEmail = async () => {
+    const email = newEmail.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error("Enter a valid email");
+    setEmailBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email });
+      if (error) return toast.error(error.message);
+      toast.success("Confirmation sent to the new email — click the link there to finish");
+      setNewEmail("");
+    } finally { setEmailBusy(false); }
+  };
 
   const sendPasswordReset = async () => {
     if (!user?.email) return toast.error("No email on file");
@@ -105,6 +119,16 @@ function UserSettings() {
         <Button onClick={save}>Save</Button>
         <div className="pt-4 border-t mt-6">
           <h2 className="font-semibold mb-2">Account security</h2>
+          <div className="mb-4">
+            <Label>Current email</Label>
+            <Input value={user?.email ?? ""} disabled className="mb-2" />
+            <Label>Change email</Label>
+            <div className="flex gap-2">
+              <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="new@email.com" type="email" />
+              <Button onClick={changeEmail} disabled={emailBusy || !newEmail.trim()}>Update</Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">We'll send a confirmation link to the new address. The change takes effect once you click it.</p>
+          </div>
           <p className="text-sm text-muted-foreground mb-2">We'll email you a secure link to change your password.</p>
           <Button variant="outline" onClick={sendPasswordReset}>Send password reset email</Button>
         </div>

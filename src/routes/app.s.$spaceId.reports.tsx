@@ -30,6 +30,13 @@ function ReportsPage() {
     load();
   };
 
+  const remove = async (id: string) => {
+    if (!confirm("Delete this report permanently?")) return;
+    const { error } = await supabase.from("reports").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    setReports((rs) => rs.filter((r) => r.id !== id));
+  };
+
   const escalate = async () => {
     if (!user || !escalating) return;
     if (!details.trim()) return toast.error("Add details for the site admins");
@@ -58,6 +65,7 @@ function ReportsPage() {
               <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "resolved")}>Resolve</Button>
               <Button size="sm" variant="ghost" onClick={() => setStatus(r.id, "dismissed")}>Dismiss</Button>
               <Button size="sm" variant="outline" onClick={() => setEscalating(r)}><ArrowUpRight className="h-3 w-3 mr-1" />Escalate to site admins</Button>
+              <Button size="sm" variant="destructive" onClick={() => remove(r.id)}>Delete</Button>
             </div>
           </Card>
         ))}

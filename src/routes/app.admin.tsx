@@ -33,6 +33,48 @@ function AdminPage() {
     setAdmins(data ?? []);
   };
 
+  const loadReports = async () => {
+    const { data } = await supabase.from("site_reports").select("*").order("created_at", { ascending: false }).limit(100);
+    const rows = (data ?? []) as any[];
+    const spaceIds = Array.from(new Set(rows.map((r) => r.space_id).filter(Boolean)));
+    const userIds = Array.from(new Set(rows.flatMap((r) => [r.escalator_id, r.target_user_id]).filter(Boolean)));
+    const srcIds = rows.map((r) => r.source_report_id).filter(Boolean);
+    const [sp, us, sr] = await Promise.all([
+      spaceIds.length ? supabase.from("spaces").select("id,name,slug,owner_id").in("id", spaceIds) : Promise.resolve({ data: [] as any[] }),
+      userIds.length ? supabase.from("profiles").select("id,username,display_name").in("id", userIds) : Promise.resolve({ data: [] as any[] }),
+      srcIds.length ? supabase.from("reports").select("id,message_id,reporter_id,target_user_id,reason").in("id", srcIds) : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const spMap = new Map((sp.data ?? []).map((s: any) => [s.id, s]));
+    const usMap = new Map((us.data ?? []).map((u: any) => [u.id, u]));
+    const srMap = new Map((sr.data ?? []).map((r: any) => [r.id, r]));
+    const msgIds = Array.from(new Set([...srMap.values()].map((r: any) => r.message_id).filter(Boolean)));
+    const ownerIds = Array.from(new Set([...spMap.values()].map((s: any) => s.owner_id).filter(Boolean)));
+    const [msgs, owns, reporterExtra] = await Promise.all([
+      msgIds.length ? supabase.from("messages").select("id,body,deleted_at").in("id", msgIds as string[]) : Promise.resolve({ data: [] as any[] }),
+      ownerIds.length ? supabase.from("profiles").select("id,username,display_name").in("id", ownerIds as string[]) : Promise.resolve({ data: [] as any[] }),
+      (() => {
+        const extra = Array.from(new Set([...srMap.values()].flatMap((r: any) => [r.reporter_id, r.target_user_id]).filter(Boolean)));
+        return extra.length ? supabase.from("profiles").select("id,username,display_name").in("id", extra as string[]) : Promise.resolve({ data: [] as any[] });
+      })(),
+    ]);
+    const msgMap = new Map((msgs.data ?? []).map((m: any) => [m.id, m]));
+    const ownMap = new Map((owns.data ?? []).map((p: any) => [p.id, p]));
+    (reporterExtra.data ?? []).forEach((p: any) => usMap.set(p.id, p));
+    setReports(rows.map((r) => {
+      const src: any = r.source_report_id ? srMap.get(r.source_report_id) : null;
+      const space: any = r.space_id ? spMap.get(r.space_id) : null;
+      return {
+        ...r,
+        _space: space,
+        _spaceOwner: space?.owner_id ? ownMap.get(space.owner_id) : null,
+        _escalator: r.escalator_id ? usMap.get(r.escalator_id) : null,
+        _target: r.target_user_id ? usMap.get(r.target_user_id) : (src?.target_user_id ? usMap.get(src.target_user_id) : null),
+        _reporter: src?.reporter_id ? usMap.get(src.reporter_id) : null,
+        _message: src?.message_id ? msgMap.get(src.message_id) : null,
+      };
+    }));
+  };
+
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -40,14 +82,13 @@ function AdminPage() {
       const ok = !!data;
       setIsAdmin(ok);
       if (!ok) return;
-      const [r, s, u, sr] = await Promise.all([
-        supabase.from("site_reports").select("*").order("created_at", { ascending: false }).limit(50),
+      const [s, u, sr] = await Promise.all([
         supabase.from("spaces").select("id", { count: "exact", head: true }),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("site_reports").select("id", { count: "exact", head: true }).eq("status", "open"),
       ]);
-      setReports(r.data ?? []);
       setStats({ spaces: s.count ?? 0, users: u.count ?? 0, reports: sr.count ?? 0 });
+      await loadReports();
       loadAdmins();
       const { data: ss } = await supabase.from("site_settings" as any).select("owner_user_id").eq("id", 1).maybeSingle();
       setSiteOwner((ss as any)?.owner_user_id ?? null);
@@ -89,6 +130,35 @@ function AdminPage() {
     const { error } = await supabase.from("site_reports").update({ status }).eq("id", id);
     if (error) return toast.error(error.message);
     setReports((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
+  };
+
+  const deleteReport = async (id: string) => {
+    if (!confirm("Delete this report permanently?")) return;
+    const { error } = await supabase.from("site_reports").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    setReports((rs) => rs.filter((r) => r.id !== id));
+  };
+
+  const dmSpaceOwner = async (ownerId?: string | null) => {
+    if (!user || !ownerId) return;
+    const { data: mine } = await supabase.from("dm_participants").select("thread_id").eq("user_id", user.id);
+    const ids = (mine ?? []).map((r) => r.thread_id);
+    let threadId: string | null = null;
+    if (ids.length) {
+      const { data: shared } = await supabase.from("dm_participants").select("thread_id").eq("user_id", ownerId).in("thread_id", ids).maybeSingle();
+      threadId = shared?.thread_id ?? null;
+    }
+    if (!threadId) {
+      const { data: t } = await supabase.from("dm_threads").insert({}).select("id").single();
+      if (t) {
+        threadId = t.id;
+        await supabase.from("dm_participants").insert([
+          { thread_id: t.id, user_id: user.id, accepted: true },
+          { thread_id: t.id, user_id: ownerId, accepted: true },
+        ]);
+      }
+    }
+    if (threadId) nav({ to: "/app/dm/$threadId", params: { threadId } });
   };
 
   const promote = async () => {
@@ -208,12 +278,26 @@ function AdminPage() {
                     <span>{new Date(r.created_at).toLocaleString()}</span>
                     <span className="px-2 py-0.5 rounded bg-muted">{r.status}</span>
                   </div>
-                  <div className="text-sm font-medium">{r.reason}</div>
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap">{r.details}</div>
-                  <div className="flex gap-2 pt-1">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div><span className="text-muted-foreground">Space:</span> {r._space ? <><span className="font-medium">{r._space.name}</span>{r._spaceOwner && <span className="text-muted-foreground"> (owner @{r._spaceOwner.username})</span>}</> : "—"}</div>
+                    <div><span className="text-muted-foreground">Escalated by:</span> {r._escalator ? `@${r._escalator.username}` : "—"}</div>
+                    <div><span className="text-muted-foreground">Reported by:</span> {r._reporter ? `@${r._reporter.username}` : "—"}</div>
+                    <div><span className="text-muted-foreground">Target user:</span> {r._target ? `@${r._target.username}` : "—"}</div>
+                  </div>
+                  <div className="text-sm font-medium">Reason: {r.reason}</div>
+                  {r._message && (
+                    <div className="text-xs bg-muted rounded p-2">
+                      <div className="font-semibold mb-1">Reported message{r._message.deleted_at ? " (deleted)" : ""}:</div>
+                      <div className="whitespace-pre-wrap break-words">{r._message.body}</div>
+                    </div>
+                  )}
+                  {r.details && <div className="text-sm text-muted-foreground whitespace-pre-wrap">{r.details}</div>}
+                  <div className="flex gap-2 pt-1 flex-wrap">
                     <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "reviewing")}>Mark reviewing</Button>
                     <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "resolved")}>Resolve</Button>
                     <Button size="sm" variant="ghost" onClick={() => setStatus(r.id, "dismissed")}>Dismiss</Button>
+                    {r._space?.owner_id && <Button size="sm" variant="outline" onClick={() => dmSpaceOwner(r._space?.owner_id)}>DM space owner</Button>}
+                    <Button size="sm" variant="destructive" onClick={() => deleteReport(r.id)}>Delete</Button>
                   </div>
                 </Card>
               ))}
