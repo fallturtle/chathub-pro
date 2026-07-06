@@ -278,12 +278,26 @@ function AdminPage() {
                     <span>{new Date(r.created_at).toLocaleString()}</span>
                     <span className="px-2 py-0.5 rounded bg-muted">{r.status}</span>
                   </div>
-                  <div className="text-sm font-medium">{r.reason}</div>
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap">{r.details}</div>
-                  <div className="flex gap-2 pt-1">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div><span className="text-muted-foreground">Space:</span> {r._space ? <><span className="font-medium">{r._space.name}</span>{r._spaceOwner && <span className="text-muted-foreground"> (owner @{r._spaceOwner.username})</span>}</> : "—"}</div>
+                    <div><span className="text-muted-foreground">Escalated by:</span> {r._escalator ? `@${r._escalator.username}` : "—"}</div>
+                    <div><span className="text-muted-foreground">Reported by:</span> {r._reporter ? `@${r._reporter.username}` : "—"}</div>
+                    <div><span className="text-muted-foreground">Target user:</span> {r._target ? `@${r._target.username}` : "—"}</div>
+                  </div>
+                  <div className="text-sm font-medium">Reason: {r.reason}</div>
+                  {r._message && (
+                    <div className="text-xs bg-muted rounded p-2">
+                      <div className="font-semibold mb-1">Reported message{r._message.deleted_at ? " (deleted)" : ""}:</div>
+                      <div className="whitespace-pre-wrap break-words">{r._message.body}</div>
+                    </div>
+                  )}
+                  {r.details && <div className="text-sm text-muted-foreground whitespace-pre-wrap">{r.details}</div>}
+                  <div className="flex gap-2 pt-1 flex-wrap">
                     <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "reviewing")}>Mark reviewing</Button>
                     <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "resolved")}>Resolve</Button>
                     <Button size="sm" variant="ghost" onClick={() => setStatus(r.id, "dismissed")}>Dismiss</Button>
+                    {r._space?.owner_id && <Button size="sm" variant="outline" onClick={() => dmSpaceOwner(r._space?.owner_id)}>DM space owner</Button>}
+                    <Button size="sm" variant="destructive" onClick={() => deleteReport(r.id)}>Delete</Button>
                   </div>
                 </Card>
               ))}
