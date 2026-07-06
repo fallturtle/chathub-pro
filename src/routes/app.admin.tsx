@@ -82,14 +82,13 @@ function AdminPage() {
       const ok = !!data;
       setIsAdmin(ok);
       if (!ok) return;
-      const [r, s, u, sr] = await Promise.all([
-        supabase.from("site_reports").select("*").order("created_at", { ascending: false }).limit(50),
+      const [s, u, sr] = await Promise.all([
         supabase.from("spaces").select("id", { count: "exact", head: true }),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("site_reports").select("id", { count: "exact", head: true }).eq("status", "open"),
       ]);
-      setReports(r.data ?? []);
       setStats({ spaces: s.count ?? 0, users: u.count ?? 0, reports: sr.count ?? 0 });
+      await loadReports();
       loadAdmins();
       const { data: ss } = await supabase.from("site_settings" as any).select("owner_user_id").eq("id", 1).maybeSingle();
       setSiteOwner((ss as any)?.owner_user_id ?? null);
