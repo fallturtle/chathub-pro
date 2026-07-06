@@ -358,7 +358,9 @@ export type Database = {
           archived: boolean
           body: Json | null
           category: string | null
+          color: string | null
           created_at: string | null
+          emoji: string | null
           id: string
           name: string
           position: number
@@ -371,7 +373,9 @@ export type Database = {
           archived?: boolean
           body?: Json | null
           category?: string | null
+          color?: string | null
           created_at?: string | null
+          emoji?: string | null
           id?: string
           name: string
           position?: number
@@ -384,7 +388,9 @@ export type Database = {
           archived?: boolean
           body?: Json | null
           category?: string | null
+          color?: string | null
           created_at?: string | null
+          emoji?: string | null
           id?: string
           name?: string
           position?: number
@@ -399,6 +405,82 @@ export type Database = {
             columns: ["space_id"]
             isOneToOne: false
             referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_post_votes: {
+        Row: {
+          post_id: string
+          user_id: string
+          vote: number
+        }
+        Insert: {
+          post_id: string
+          user_id: string
+          vote: number
+        }
+        Update: {
+          post_id?: string
+          user_id?: string
+          vote?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_post_votes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          author_id: string
+          body: string | null
+          channel_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          locked: boolean
+          pinned: boolean
+          score: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body?: string | null
+          channel_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          locked?: boolean
+          pinned?: boolean
+          score?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string | null
+          channel_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          locked?: boolean
+          pinned?: boolean
+          score?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
             referencedColumns: ["id"]
           },
         ]
@@ -1091,6 +1173,24 @@ export type Database = {
           },
         ]
       }
+      retention_settings: {
+        Row: {
+          id: number
+          message_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          message_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          message_days?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       scheduled_messages: {
         Row: {
           author_id: string
@@ -1420,6 +1520,7 @@ export type Database = {
           mention_all_policy: Database["public"]["Enums"]["mention_all_policy"]
           name: string
           owner_id: string
+          settings: Json
           slug: string
           visibility: Database["public"]["Enums"]["space_visibility"]
         }
@@ -1434,6 +1535,7 @@ export type Database = {
           mention_all_policy?: Database["public"]["Enums"]["mention_all_policy"]
           name: string
           owner_id: string
+          settings?: Json
           slug: string
           visibility?: Database["public"]["Enums"]["space_visibility"]
         }
@@ -1448,6 +1550,7 @@ export type Database = {
           mention_all_policy?: Database["public"]["Enums"]["mention_all_policy"]
           name?: string
           owner_id?: string
+          settings?: Json
           slug?: string
           visibility?: Database["public"]["Enums"]["space_visibility"]
         }
@@ -1521,6 +1624,33 @@ export type Database = {
           },
         ]
       }
+      user_ips: {
+        Row: {
+          first_seen: string
+          id: string
+          ip: string
+          last_seen: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          first_seen?: string
+          id?: string
+          ip: string
+          last_seen?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          first_seen?: string
+          id?: string
+          ip?: string
+          last_seen?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1581,7 +1711,13 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "admin"
-      channel_kind: "general" | "announcement" | "rules" | "links" | "locked"
+      channel_kind:
+        | "general"
+        | "announcement"
+        | "rules"
+        | "links"
+        | "locked"
+        | "community"
       mention_all_policy: "owners" | "managers" | "everyone"
       poll_kind: "single" | "multi" | "ranked"
       space_role: "member" | "manager" | "owner"
@@ -1715,7 +1851,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin"],
-      channel_kind: ["general", "announcement", "rules", "links", "locked"],
+      channel_kind: [
+        "general",
+        "announcement",
+        "rules",
+        "links",
+        "locked",
+        "community",
+      ],
       mention_all_policy: ["owners", "managers", "everyone"],
       poll_kind: ["single", "multi", "ranked"],
       space_role: ["member", "manager", "owner"],
