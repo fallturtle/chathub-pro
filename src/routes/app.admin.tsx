@@ -33,6 +33,48 @@ function AdminPage() {
     setAdmins(data ?? []);
   };
 
+  const loadReports = async () => {
+    const { data } = await supabase.from("site_reports").select("*").order("created_at", { ascending: false }).limit(100);
+    const rows = (data ?? []) as any[];
+    const spaceIds = Array.from(new Set(rows.map((r) => r.space_id).filter(Boolean)));
+    const userIds = Array.from(new Set(rows.flatMap((r) => [r.escalator_id, r.target_user_id]).filter(Boolean)));
+    const srcIds = rows.map((r) => r.source_report_id).filter(Boolean);
+    const [sp, us, sr] = await Promise.all([
+      spaceIds.length ? supabase.from("spaces").select("id,name,slug,owner_id").in("id", spaceIds) : Promise.resolve({ data: [] as any[] }),
+      userIds.length ? supabase.from("profiles").select("id,username,display_name").in("id", userIds) : Promise.resolve({ data: [] as any[] }),
+      srcIds.length ? supabase.from("reports").select("id,message_id,reporter_id,target_user_id,reason").in("id", srcIds) : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const spMap = new Map((sp.data ?? []).map((s: any) => [s.id, s]));
+    const usMap = new Map((us.data ?? []).map((u: any) => [u.id, u]));
+    const srMap = new Map((sr.data ?? []).map((r: any) => [r.id, r]));
+    const msgIds = Array.from(new Set([...srMap.values()].map((r: any) => r.message_id).filter(Boolean)));
+    const ownerIds = Array.from(new Set([...spMap.values()].map((s: any) => s.owner_id).filter(Boolean)));
+    const [msgs, owns, reporterExtra] = await Promise.all([
+      msgIds.length ? supabase.from("messages").select("id,body,deleted_at").in("id", msgIds as string[]) : Promise.resolve({ data: [] as any[] }),
+      ownerIds.length ? supabase.from("profiles").select("id,username,display_name").in("id", ownerIds as string[]) : Promise.resolve({ data: [] as any[] }),
+      (() => {
+        const extra = Array.from(new Set([...srMap.values()].flatMap((r: any) => [r.reporter_id, r.target_user_id]).filter(Boolean)));
+        return extra.length ? supabase.from("profiles").select("id,username,display_name").in("id", extra as string[]) : Promise.resolve({ data: [] as any[] });
+      })(),
+    ]);
+    const msgMap = new Map((msgs.data ?? []).map((m: any) => [m.id, m]));
+    const ownMap = new Map((owns.data ?? []).map((p: any) => [p.id, p]));
+    (reporterExtra.data ?? []).forEach((p: any) => usMap.set(p.id, p));
+    setReports(rows.map((r) => {
+      const src: any = r.source_report_id ? srMap.get(r.source_report_id) : null;
+      const space: any = r.space_id ? spMap.get(r.space_id) : null;
+      return {
+        ...r,
+        _space: space,
+        _spaceOwner: space?.owner_id ? ownMap.get(space.owner_id) : null,
+        _escalator: r.escalator_id ? usMap.get(r.escalator_id) : null,
+        _target: r.target_user_id ? usMap.get(r.target_user_id) : (src?.target_user_id ? usMap.get(src.target_user_id) : null),
+        _reporter: src?.reporter_id ? usMap.get(src.reporter_id) : null,
+        _message: src?.message_id ? msgMap.get(src.message_id) : null,
+      };
+    }));
+  };
+
   useEffect(() => {
     if (!user) return;
     (async () => {
