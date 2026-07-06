@@ -132,6 +132,35 @@ function AdminPage() {
     setReports((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
   };
 
+  const deleteReport = async (id: string) => {
+    if (!confirm("Delete this report permanently?")) return;
+    const { error } = await supabase.from("site_reports").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    setReports((rs) => rs.filter((r) => r.id !== id));
+  };
+
+  const dmSpaceOwner = async (ownerId?: string | null) => {
+    if (!user || !ownerId) return;
+    const { data: mine } = await supabase.from("dm_participants").select("thread_id").eq("user_id", user.id);
+    const ids = (mine ?? []).map((r) => r.thread_id);
+    let threadId: string | null = null;
+    if (ids.length) {
+      const { data: shared } = await supabase.from("dm_participants").select("thread_id").eq("user_id", ownerId).in("thread_id", ids).maybeSingle();
+      threadId = shared?.thread_id ?? null;
+    }
+    if (!threadId) {
+      const { data: t } = await supabase.from("dm_threads").insert({}).select("id").single();
+      if (t) {
+        threadId = t.id;
+        await supabase.from("dm_participants").insert([
+          { thread_id: t.id, user_id: user.id, accepted: true },
+          { thread_id: t.id, user_id: ownerId, accepted: true },
+        ]);
+      }
+    }
+    if (threadId) nav({ to: "/app/dm/$threadId", params: { threadId } });
+  };
+
   const promote = async () => {
     const q = promoteQ.trim().replace(/^@/, "");
     if (!q) return;
