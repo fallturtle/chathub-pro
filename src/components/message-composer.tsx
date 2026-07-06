@@ -388,23 +388,48 @@ export function MessageComposer({
 function GifDialog({ open, onOpenChange, onSubmit }: { open: boolean; onOpenChange: (v: boolean) => void; onSubmit: (url: string) => Promise<void> }) {
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
-  const STICKERS = [
-    "https://media.tenor.com/x8v1oNUOmg4AAAAi/thumbs-up.gif",
-    "https://media.tenor.com/9pyhmDpsZdoAAAAi/fire.gif",
-    "https://media.tenor.com/MA8b3HOk2EQAAAAi/party-parrot.gif",
-    "https://media.tenor.com/cD-NHHsM8DwAAAAi/clap.gif",
-    "https://media.tenor.com/c1y3IpZWMAQAAAAi/heart-blob.gif",
-    "https://media.tenor.com/IbuC8mxPa0YAAAAi/cat-cute.gif",
-  ];
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<{ id: string; url: string; preview: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const GIPHY_KEY = "dc6zaTOxFJmzC"; // public beta key
+  const load = async (query: string) => {
+    setLoading(true);
+    try {
+      const endpoint = query.trim()
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&limit=24&rating=pg-13&q=${encodeURIComponent(query.trim())}`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=24&rating=pg-13`;
+      const res = await fetch(endpoint);
+      const j = await res.json();
+      setResults((j.data ?? []).map((g: any) => ({
+        id: g.id,
+        url: g.images?.original?.url ?? g.images?.downsized?.url,
+        preview: g.images?.fixed_width_downsampled?.url ?? g.images?.fixed_width?.url,
+      })));
+    } catch { setResults([]); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (open) load(""); }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => load(q), 350);
+    return () => clearTimeout(t);
+  }, [q, open]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>Send a GIF or sticker</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            {STICKERS.map((s) => (
-              <button key={s} onClick={async () => { setBusy(true); await onSubmit(s); setBusy(false); }} disabled={busy} className="border rounded-lg overflow-hidden hover:ring-2 hover:ring-primary aspect-square bg-muted">
-                <img src={s} alt="sticker" className="w-full h-full object-cover" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search GIFs…" autoFocus />
+          <div className="grid grid-cols-3 gap-2 max-h-[420px] overflow-y-auto">
+            {loading && results.length === 0 && (
+              <div className="col-span-3 text-center text-xs text-muted-foreground py-8">Loading…</div>
+            )}
+            {!loading && results.length === 0 && (
+              <div className="col-span-3 text-center text-xs text-muted-foreground py-8">No results.</div>
+            )}
+            {results.map((g) => (
+              <button key={g.id} onClick={async () => { setBusy(true); await onSubmit(g.url); setBusy(false); }} disabled={busy} className="border rounded-lg overflow-hidden hover:ring-2 hover:ring-primary aspect-square bg-muted">
+                <img src={g.preview} alt="gif" className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}
           </div>
@@ -413,7 +438,7 @@ function GifDialog({ open, onOpenChange, onSubmit }: { open: boolean; onOpenChan
             <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…/file.gif" />
             <Button size="sm" disabled={busy || !url.trim()} onClick={async () => { setBusy(true); await onSubmit(url.trim()); setBusy(false); setUrl(""); }}>Send</Button>
           </div>
-          <p className="text-xs text-muted-foreground">Paste any direct image or GIF URL from Tenor, Giphy, or anywhere else.</p>
+          <p className="text-xs text-muted-foreground">Powered by GIPHY. You can also paste any direct image/GIF URL from Tenor, Giphy, or elsewhere.</p>
         </div>
       </DialogContent>
     </Dialog>
