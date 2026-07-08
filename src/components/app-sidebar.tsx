@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Plus, Compass, MessageSquare, Settings, LogOut, Search, Bookmark, Shield } from "lucide-react";
+import { Plus, Compass, MessageSquare, Settings, LogOut, Search, Bookmark, Shield, Puzzle } from "lucide-react";
 import { CreateSpaceDialog } from "./create-space-dialog";
 import { JoinSpaceDialog } from "./join-space-dialog";
 import {
@@ -136,6 +136,9 @@ export function AppSidebar() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => nav({ to: "/app/saved" })}>
               <Bookmark className="h-4 w-4 mr-2" /> Saved messages
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => nav({ to: "/app/plugins" })}>
+              <Puzzle className="h-4 w-4 mr-2" /> Plugins & add-ons
             </DropdownMenuItem>
             {isAdmin && (
               <DropdownMenuItem onClick={() => nav({ to: "/app/admin" })}>

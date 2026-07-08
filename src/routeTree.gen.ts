@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppSavedRouteImport } from './routes/app.saved'
+import { Route as AppPluginsRouteImport } from './routes/app.plugins'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 import { Route as AppSSpaceIdRouteImport } from './routes/app.s.$spaceId'
 import { Route as AppDmThreadIdRouteImport } from './routes/app.dm.$threadId'
@@ -77,6 +78,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppSavedRoute = AppSavedRouteImport.update({
   id: '/saved',
   path: '/saved',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPluginsRoute = AppPluginsRouteImport.update({
+  id: '/plugins',
+  path: '/plugins',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminRoute = AppAdminRouteImport.update({
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/plugins': typeof AppPluginsRoute
   '/app/saved': typeof AppSavedRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/plugins': typeof AppPluginsRoute
   '/app/saved': typeof AppSavedRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/plugins': typeof AppPluginsRoute
   '/app/saved': typeof AppSavedRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/app/admin'
+    | '/app/plugins'
     | '/app/saved'
     | '/app/settings'
     | '/app/'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/app/admin'
+    | '/app/plugins'
     | '/app/saved'
     | '/app/settings'
     | '/app'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/app/admin'
+    | '/app/plugins'
     | '/app/saved'
     | '/app/settings'
     | '/app/'
@@ -384,6 +396,13 @@ declare module '@tanstack/react-router' {
       path: '/saved'
       fullPath: '/app/saved'
       preLoaderRoute: typeof AppSavedRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/plugins': {
+      id: '/app/plugins'
+      path: '/plugins'
+      fullPath: '/app/plugins'
+      preLoaderRoute: typeof AppPluginsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/admin': {
@@ -528,6 +547,7 @@ const AppSSpaceIdRouteWithChildren = AppSSpaceIdRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
+  AppPluginsRoute: typeof AppPluginsRoute
   AppSavedRoute: typeof AppSavedRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -537,6 +557,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
+  AppPluginsRoute: AppPluginsRoute,
   AppSavedRoute: AppSavedRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
