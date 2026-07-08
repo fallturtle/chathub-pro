@@ -35,10 +35,19 @@ function DmHome() {
     const acceptedById = new Map(rows.map((r: any) => [r.thread_id, r.accepted]));
     const { data: parts } = await supabase
       .from("dm_participants")
-      .select("thread_id, profile:profiles!user_id(id,username,display_name,avatar_color,avatar_url)")
+      .select("thread_id, user_id")
       .in("thread_id", ids)
       .neq("user_id", user.id);
-    const list = (parts ?? []).map((p: any) => ({ ...p, accepted: acceptedById.get(p.thread_id) }));
+    const otherIds = Array.from(new Set((parts ?? []).map((p: any) => p.user_id)));
+    const { data: profs } = otherIds.length
+      ? await supabase.from("profiles").select("id,username,display_name,avatar_color,avatar_url").in("id", otherIds)
+      : { data: [] as any[] };
+    const profMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    const list = (parts ?? []).map((p: any) => ({
+      thread_id: p.thread_id,
+      profile: profMap.get(p.user_id) ?? { id: p.user_id, username: "user", display_name: null, avatar_color: "#7c3aed", avatar_url: null },
+      accepted: acceptedById.get(p.thread_id),
+    }));
     setThreads(list.filter((t: any) => t.accepted));
     setRequests(list.filter((t: any) => !t.accepted));
   };

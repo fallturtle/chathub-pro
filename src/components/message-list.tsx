@@ -45,6 +45,17 @@ export function MessageList({
   const [reportTarget, setReportTarget] = useState<{ messageId: string; username?: string; body?: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Listen for /report command from composer
+  useEffect(() => {
+    if (!spaceId) return;
+    const h = (e: any) => {
+      if (e?.detail?.spaceId && e.detail.spaceId !== spaceId) return;
+      setReportTarget({ messageId: "", username: e?.detail?.username ?? "", body: e?.detail?.prefill ?? "" });
+    };
+    window.addEventListener("atrium:open-report", h);
+    return () => window.removeEventListener("atrium:open-report", h);
+  }, [spaceId]);
+
   const filterText = (t: string) => {
     let out = t;
     for (const w of blockedWords) {

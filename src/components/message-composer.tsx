@@ -25,6 +25,33 @@ const SLASH_COMMANDS: SlashCmd[] = [
   { name: "help", desc: "List all slash commands" },
   { name: "clear", desc: "Clear the composer" },
   { name: "report", desc: "Report a member to space owners/managers — /report @username reason" },
+  { name: "me", desc: "Action text — /me flips the table", run: (args) => `*_${args || "does something"}_*` },
+  { name: "shrug", desc: "¯\\_(ツ)_/¯", run: (args) => `${args ? args + " " : ""}¯\\_(ツ)_/¯` },
+  { name: "flip", desc: "Flip a coin", run: () => `🪙 ${Math.random() < 0.5 ? "Heads" : "Tails"}` },
+  { name: "roll", desc: "Roll dice — /roll 2d6", run: (args) => {
+      const m = (args || "1d6").match(/^(\d{0,2})d(\d{1,3})$/i);
+      const n = Math.max(1, Math.min(20, parseInt(m?.[1] || "1") || 1));
+      const s = Math.max(2, Math.min(1000, parseInt(m?.[2] || "6") || 6));
+      const rolls = Array.from({ length: n }, () => 1 + Math.floor(Math.random() * s));
+      return `🎲 ${n}d${s}: ${rolls.join(" + ")} = **${rolls.reduce((a,b)=>a+b,0)}**`;
+    } },
+  { name: "8ball", desc: "Ask the magic 8-ball", run: (args) => {
+      const answers = ["It is certain.","Without a doubt.","Yes, definitely.","You may rely on it.","Most likely.","Outlook good.","Signs point to yes.","Reply hazy, try again.","Ask again later.","Cannot predict now.","Don't count on it.","My reply is no.","Very doubtful.","Outlook not so good."];
+      return `🎱 ${args ? `"${args}" — ` : ""}${answers[Math.floor(Math.random()*answers.length)]}`;
+    } },
+  { name: "fact", desc: "Share a random fun fact", run: () => {
+      const facts = [
+        "Honey never spoils. Archaeologists have eaten 3000-year-old honey.",
+        "Octopuses have three hearts and blue blood.",
+        "Bananas are berries but strawberries aren't.",
+        "A day on Venus is longer than a year on Venus.",
+        "Wombat poop is cube-shaped.",
+        "The Eiffel Tower can be 15cm taller during summer.",
+        "Sharks predate trees by ~50 million years.",
+        "There are more possible chess games than atoms in the observable universe.",
+      ];
+      return `💡 ${facts[Math.floor(Math.random()*facts.length)]}`;
+    } },
 ];
 
 export function MessageComposer({
@@ -192,18 +219,12 @@ export function MessageComposer({
 
   const send = async () => {
     if (!body.trim() || sending) return;
-    // /report command
-    const reportMatch = body.match(/^\/report\s+@?(\S+)\s+(.+)$/i);
-    if (reportMatch && spaceId && user) {
-      const uname = reportMatch[1].toLowerCase();
-      const reason = reportMatch[2].trim();
-      const { data: prof } = await supabase.from("profiles").select("id").ilike("username", uname).maybeSingle();
-      const { error } = await supabase.from("reports").insert({
-        space_id: spaceId, reporter_id: user.id,
-        target_user_id: (prof as any)?.id ?? null, reason,
-      });
-      if (error) { toast.error(error.message); return; }
-      toast.success("Report sent to space managers");
+    // /report — open the reporting UI instead of inserting a raw row
+    const reportMatch = body.match(/^\/report(?:\s+@?(\S+))?(?:\s+(.+))?$/i);
+    if (reportMatch && spaceId) {
+      window.dispatchEvent(new CustomEvent("atrium:open-report", {
+        detail: { spaceId, username: reportMatch[1] ?? "", prefill: reportMatch[2] ?? "" },
+      }));
       setBody(""); if (draftKey) try { localStorage.removeItem(draftKey); } catch {}
       return;
     }

@@ -16,24 +16,34 @@ function DmRoute() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("dm_participants")
-      .select("profile:profiles!user_id(id,username,display_name,avatar_color)")
-      .eq("thread_id", threadId)
-      .neq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setOther((data as any)?.profile));
+    (async () => {
+      const { data: part } = await supabase
+        .from("dm_participants")
+        .select("user_id")
+        .eq("thread_id", threadId)
+        .neq("user_id", user.id)
+        .maybeSingle();
+      if (!part) { setOther(null); return; }
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("id,username,display_name,avatar_color,avatar_url")
+        .eq("id", (part as any).user_id)
+        .maybeSingle();
+      setOther(prof ?? null);
+    })();
   }, [threadId, user]);
 
   return (
     <div className="flex flex-col h-full">
       <header className="border-b px-4 py-3 flex items-center gap-3">
-        <div className="h-8 w-8 rounded-full flex items-center justify-center text-white text-sm" style={{ background: other?.avatar_color ?? "#7c3aed" }}>
-          {(other?.username ?? "?")[0]?.toUpperCase()}
+        <div className="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center text-white text-sm" style={{ background: other?.avatar_color ?? "#7c3aed" }}>
+          {other?.avatar_url
+            ? <img src={other.avatar_url} alt="" className="h-full w-full object-cover" />
+            : (other?.username ?? "?")[0]?.toUpperCase()}
         </div>
         <div>
-          <div className="font-semibold">{other?.display_name || other?.username || "Direct message"}</div>
-          <div className="text-xs text-muted-foreground">@{other?.username}</div>
+          <div className="font-semibold">{other?.display_name || other?.username || "Loading conversation…"}</div>
+          {other?.username && <div className="text-xs text-muted-foreground">@{other.username}</div>}
         </div>
       </header>
       <MessageList dmThreadId={threadId} />
