@@ -16,13 +16,27 @@ function DmRoute() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
+    (async () => {
+      const { data: part } = await supabase
+        .from("dm_participants")
+        .select("user_id")
+        .eq("thread_id", threadId)
+        .neq("user_id", user.id)
+        .maybeSingle();
+      if (!part) { setOther(null); return; }
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("id,username,display_name,avatar_color,avatar_url")
+        .eq("id", (part as any).user_id)
+        .maybeSingle();
+      setOther(prof ?? null);
+    })();
+    // (legacy embed removed — FK from dm_participants.user_id points to auth.users, not profiles)
+    void supabase
       .from("dm_participants")
-      .select("profile:profiles!user_id(id,username,display_name,avatar_color)")
+      .select("thread_id")
       .eq("thread_id", threadId)
-      .neq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setOther((data as any)?.profile));
+      .limit(0);
   }, [threadId, user]);
 
   return (
